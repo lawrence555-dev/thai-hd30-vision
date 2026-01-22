@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, IChartApi, Time } from "lightweight-charts";
+import { createChart, ColorType, IChartApi, Time, AreaSeries } from "lightweight-charts";
 
 interface StockChartProps {
     data: { time: string; value: number }[];
@@ -79,7 +79,7 @@ export default function StockChart({
         });
 
         // Add Area Series
-        const newSeries = (chart as any).addAreaSeries({
+        const newSeries = chart.addSeries(AreaSeries, {
             lineColor: lineColor,
             topColor: topColor,
             bottomColor: bottomColor,
