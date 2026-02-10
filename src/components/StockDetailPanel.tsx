@@ -128,20 +128,6 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 }
             }
 
-            // Dictionary check: FORCE MOCK DATA FOR DEBUGging
-            formattedChartData = [
-                { time: '09:00', price: 100 },
-                { time: '09:30', price: 102 },
-                { time: '10:00', price: 101 },
-                { time: '10:30', price: 104 },
-                { time: '11:00', price: 103 },
-                { time: '11:30', price: 105 },
-                { time: '12:00', price: 106 },
-                { time: '14:00', price: 105 },
-                { time: '14:30', price: 107 },
-                { time: '15:00', price: 108 },
-            ];
-
             setChartData(formattedChartData);
 
         } catch (error) {
