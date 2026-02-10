@@ -25,7 +25,6 @@ interface StockData {
 export default function Dashboard() {
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [currency, setCurrency] = useState<'THB' | 'TWD'>('THB');
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,12 +146,6 @@ export default function Dashboard() {
             >
               <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
             </button>
-            <button
-              onClick={() => setCurrency(prev => prev === 'THB' ? 'TWD' : 'THB')}
-              className="glass h-10 px-4 rounded-lg font-bold text-xs text-[var(--gold)] border-[var(--gold)]/20 hover:bg-[var(--gold)]/10 transition-colors"
-            >
-              {currency}
-            </button>
           </div>
         </div>
       </header>
@@ -258,7 +251,7 @@ export default function Dashboard() {
                           <span>Price</span>
                           <span className="scale-75 opacity-50">股價</span>
                         </div>
-                        <div className="font-mono text-slate-200 font-bold">{formatCurrency(stock.price, currency)}</div>
+                        <div className="font-mono text-slate-200 font-bold">{formatCurrency(stock.price)}</div>
                       </div>
                       <div className="text-right w-16 md:w-20">
                         <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
@@ -306,7 +299,7 @@ export default function Dashboard() {
 
                   <div className="flex justify-between items-end">
                     <div className="text-2xl font-black text-slate-200 font-mono">
-                      {formatCurrency(stock.price, currency)}
+                      {formatCurrency(stock.price)}
                     </div>
                     <div className="text-right">
                       <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
