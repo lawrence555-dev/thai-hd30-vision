@@ -61,7 +61,14 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 .order('captured_at', { ascending: true }) // Chart needs chronological order
                 .limit(50); // Limit to recent history for 'intraday' feel
 
-            if (logsError) throw logsError;
+            // 3. Fetch Dividend History
+            const { data: divHistory, error: divError } = await supabase
+                .from('dividend_history')
+                .select('*')
+                .eq('stock_id', stockData.id)
+                .order('ex_date', { ascending: false });
+
+            if (divError) throw divError;
 
             // Process Data
             const latestLog = priceLogs && priceLogs.length > 0
@@ -76,7 +83,8 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 change: Number(latestLog.change),
                 changePercent: Number(latestLog.change_percent),
                 yield: Number(stockData.current_yield) || 0,
-                avgYield: Number(stockData.avg_yield_5y) || 0
+                avgYield: Number(stockData.avg_yield_5y) || 0,
+                dividends: divHistory || []
             });
 
             // Format Chart Data
@@ -195,11 +203,45 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                     </div>
                                 </div>
 
+                                {/* Dividend History List */}
+                                <div className="glass-card p-6 border-white/5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <DollarSign className="text-[var(--gold)]" size={20} />
+                                        <div className="flex items-baseline gap-2">
+                                            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Dividend History (5Y)</h3>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">配息紀錄</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {details.dividends && details.dividends.length > 0 ? (
+                                            details.dividends.map((div: any) => (
+                                                <div key={div.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0 hover:bg-white/5 px-2 rounded transition-colors">
+                                                    <div>
+                                                        <div className="text-sm font-bold text-slate-300">{div.ex_date}</div>
+                                                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                            Ex-Date <span className="opacity-50">除息日</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-mono font-bold text-[var(--gold)]">฿{div.amount}</div>
+                                                        <div className="text-xs text-slate-500">{div.type}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-sm text-slate-500 text-center py-4">No dividend history found.</div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {/* AI Summary Placeholder */}
                                 <div className="glass-card p-6 bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-white/10">
                                     <div className="flex items-center gap-2 mb-4">
                                         <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                                        <h3 className="text-sm font-bold text-blue-200 uppercase tracking-widest">Gemini AI Analysis</h3>
+                                        <div className="flex items-baseline gap-2">
+                                            <h3 className="text-sm font-bold text-blue-200 uppercase tracking-widest">Gemini AI Analysis</h3>
+                                            <span className="text-[10px] font-bold text-blue-300/50 uppercase tracking-wider">智能分析</span>
+                                        </div>
                                     </div>
                                     <p className="text-slate-300 leading-relaxed text-sm">
                                         {details.symbol} currently shows a dividend yield of <span className="text-[var(--gold)] font-bold">{details.yield}%</span>,
