@@ -34,10 +34,16 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
     const [details, setDetails] = useState<StockDetails | null>(null);
     const [chartData, setChartData] = useState<ChartPoint[]>([]);
     const [loading, setLoading] = useState(false);
+    const [ready, setReady] = useState(false); // Validated fix for chart sizing
 
     useEffect(() => {
         if (symbol) {
             fetchStockDetails(symbol);
+            // Delay chart rendering to allow panel animation to finish and layout to stabilize
+            const timer = setTimeout(() => setReady(true), 600);
+            return () => clearTimeout(timer);
+        } else {
+            setReady(false);
         }
     }, [symbol]);
 
@@ -195,11 +201,11 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                         </div>
                                     </div>
                                     <div className="h-[350px] -mx-2">
-                                        {chartData.length > 0 ? (
+                                        {ready && chartData.length > 0 ? (
                                             <StockChart data={chartData} isUp={isUp} height={350} />
                                         ) : (
                                             <div className="h-full flex items-center justify-center text-slate-500">
-                                                Insufficient data for chart
+                                                {!ready ? "Loading Chart..." : "Insufficient data for chart"}
                                             </div>
                                         )}
                                     </div>
