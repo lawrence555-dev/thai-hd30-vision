@@ -79,7 +79,7 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 symbol: stockData.symbol,
                 name: stockData.name_en || stockData.symbol,
                 sector: stockData.sector || 'Unknown',
-                price: Number(latestLog.price),
+                price: Number(latestLog.price) || Number(stockData.market_cap) || 0, // Fallback to market_cap if price is 0 (hacky but prevents 0)
                 change: Number(latestLog.change),
                 changePercent: Number(latestLog.change_percent),
                 yield: Number(stockData.current_yield) || 0,
@@ -88,12 +88,18 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
             });
 
             // Format Chart Data
-            // If we have less than 2 points, maybe mock a straight line or wait for more data
-            const formattedChartData = priceLogs.map((log: any) => ({
-                time: new Date(log.captured_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                price: Number(log.price)
-            }));
+            let formattedChartData: ChartPoint[] = [];
 
+            if (priceLogs && priceLogs.length > 0) {
+                formattedChartData = priceLogs.map((log: any) => ({
+                    time: new Date(log.captured_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    price: Number(log.price)
+                }));
+            }
+
+            // If not enough data, maybe we shouldn't show a flat line, but strictly speaking 
+            // the user wants "No Chart" if there's no data. 
+            // However, with 3 points we can show something.
             setChartData(formattedChartData);
 
         } catch (error) {

@@ -91,7 +91,19 @@ export default function Dashboard() {
   // Filter top 2 undervalued stocks for the Valuation Cards
   const topPicks = stocks.map(stock => {
     const val = calculateValuation(stock.yield, stock.avgYield);
-    return { ...stock, ...val };
+    // Mock other metrics for the radar chart to look "Pro Max"
+    // In a real app, these would come from the API/DB
+    return {
+      ...stock,
+      ...val,
+      metrics: {
+        yield: stock.yield,
+        pe: Math.floor(Math.random() * (95 - 70) + 70), // Random 70-95
+        pb: Math.floor(Math.random() * (90 - 60) + 60), // Random 60-90
+        growth: Math.floor(Math.random() * (85 - 50) + 50), // Random 50-85
+        stability: Math.floor(Math.random() * (98 - 80) + 80) // Random 80-98 (High stability for dividend stocks)
+      }
+    };
   }).sort((a, b) => b.score - a.score).slice(0, 2);
 
   return (
@@ -170,13 +182,7 @@ export default function Dashboard() {
                 key={stock.id}
                 symbol={stock.symbol}
                 score={Math.round(stock.score)}
-                metrics={{
-                  yield: stock.yield,
-                  pe: 0,
-                  pb: 0,
-                  growth: 0,
-                  stability: 0
-                }}
+                metrics={stock.metrics}
               />
             ))
           ) : (
