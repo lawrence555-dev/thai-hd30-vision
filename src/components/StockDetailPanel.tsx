@@ -91,10 +91,14 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
             let formattedChartData: ChartPoint[] = [];
 
             if (priceLogs && priceLogs.length > 5) {
-                formattedChartData = priceLogs.map((log: any) => ({
-                    time: new Date(log.captured_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-                    price: Number(log.price)
-                }));
+                formattedChartData = priceLogs.map((log: any) => {
+                    const d = new Date(log.captured_at);
+                    const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                    return {
+                        time: timeStr,
+                        price: Number(log.price)
+                    };
+                });
             } else {
                 // Generate Mock Intraday Data for Demo/Vision purpose if real data is sparse
                 // Start from opening price (e.g. current price +/- 2%)
@@ -109,9 +113,10 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                     const change = (Math.random() - 0.5) * (basePrice * 0.005);
                     currentPrice += change;
                     const time = new Date(startTime.getTime() + i * 5 * 60000);
+                    const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
 
                     formattedChartData.push({
-                        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+                        time: timeStr,
                         price: Number(currentPrice.toFixed(2))
                     });
                 }
