@@ -58,19 +58,32 @@ export const StockChart: React.FC<StockChartProps> = ({ data, color = '#22c55e' 
             handleScroll: false,
         });
 
-        // Add Area Series
-        const newSeries = chart.addSeries(AreaSeries, {
+        // Determine line color based on trend (First vs Last)
+        let lineColor = '#22c55e'; // Default green
+        if (data.length >= 2) {
+            // Assuming data[0].value and data[data.length - 1].value are the prices
+            const first = data[0].value;
+            const last = data[data.length - 1].value;
+            lineColor = last >= first ? '#22c55e' : '#ef4444'; // Rise (Green) / Fall (Red)
+        }
+
+        const newSeries = chart.addAreaSeries({
             lineColor: lineColor,
-            topColor: topColor,
-            bottomColor: bottomColor,
+            topColor: `${lineColor}20`, // low opacity
+            bottomColor: 'rgba(0, 0, 0, 0)', // transparent
             lineWidth: 2,
             priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-            crosshairMarkerVisible: enableCrosshair,
+            crosshairMarkerVisible: false, // Fixed from 'enableCrosshair'
         });
 
         if (data.length > 0) {
             // Sort data by time safely
-            const sortedData = [...data].sort((a, b) => new Date(`2000/01/01 ${a.time}`).getTime() - new Date(`2000/01/01 ${b.time}`).getTime());
+            const sortedData = [...data].sort((a, b) => {
+                // Assuming time is in "HH:MM" format for sorting
+                const [h1, m1] = a.time.split(':').map(Number);
+                const [h2, m2] = b.time.split(':').map(Number);
+                return (h1 * 60 + m1) - (h2 * 60 + m2);
+            });
 
             const today = new Date();
             const chartData = sortedData.map(d => {
