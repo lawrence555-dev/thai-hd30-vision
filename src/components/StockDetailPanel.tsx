@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Calendar, DollarSign, Activity } from "lucide-react";
-import StockChart from "./StockChart";
+import { StockChart } from './StockChart';
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/valuation";
