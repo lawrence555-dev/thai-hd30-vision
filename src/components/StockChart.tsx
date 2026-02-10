@@ -61,6 +61,17 @@ export default function StockChart({
                 borderColor: "rgba(255, 255, 255, 0.1)",
                 scaleMargins: { top: 0.1, bottom: 0.1 },
             },
+            handleScale: {
+                axisPressedMouseMove: false,
+                mouseWheel: false,
+                pinch: false,
+            },
+            handleScroll: {
+                mouseWheel: false,
+                pressedMouseMove: false,
+                horzTouchDrag: false,
+                vertTouchDrag: false,
+            },
             crosshair: {
                 vertLine: {
                     visible: enableCrosshair,

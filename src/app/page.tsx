@@ -240,118 +240,44 @@ export default function Dashboard() {
                 return (
                   <div
                     key={stock.id}
-                    onClick={() => setSelectedStock(stock.symbol)}
-                    className="glass p-4 rounded-xl flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={cn("w-1 h-10 rounded-full",
-                        valuation.status === 'EXTREME_CHEAP' ? 'bg-[var(--gold)]' :
-                          valuation.status === 'UNDERVALUED' ? 'bg-[var(--rise)]' :
-                            valuation.status === 'OVERVALUED' ? 'bg-[var(--fall)]' : 'bg-slate-600'
-                      )} />
-                      <div>
-                        <div className="font-bold text-white group-hover:text-[var(--gold)] transition-colors">{stock.symbol}</div>
-                        <div className="text-xs text-slate-500">{stock.sector}</div>
+                      )
+              }>
+                { stock.yield } %
                       </div>
                     </div>
+                  </div >
 
-                    <div className="flex items-center gap-4 md:gap-8">
-                      <div className="text-right">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
-                          <span>Price</span>
-                          <span className="scale-75 opacity-50">股價</span>
-                        </div>
-                        <div className="font-mono text-slate-200 font-bold">{formatCurrency(stock.price)}</div>
-                      </div>
-                      <div className="text-right w-16 md:w-20">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
-                          <span>Change</span>
-                          <span className="scale-75 opacity-50">漲跌</span>
-                        </div>
-                        <div className={cn("font-mono text-sm font-bold", isUp ? "text-[var(--rise)]" : "text-[var(--fall)]")}>
-                          {isUp ? "+" : ""}{stock.changePercent}%
-                        </div>
-                      </div>
-                      <div className="text-right w-16 md:w-20">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
-                          <span>Yield</span>
-                          <span className="scale-75 opacity-50">殖利率</span>
-                        </div>
-                        <div className={cn("font-mono text-sm font-bold", valuation.status === 'EXTREME_CHEAP' ? "text-[var(--gold)]" : "text-slate-400")}>
-                          {stock.yield}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
-              // GRID VIEW ITEM
-              return (
-                <div
-                  key={stock.id}
-                  onClick={() => setSelectedStock(stock.symbol)}
-                  className={cn(
-                    "glass p-4 rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group relative overflow-hidden",
-                    getBorderColor(),
-                    valuation.status === 'EXTREME_CHEAP' && "shadow-[0_0_15px_rgba(255,215,0,0.15)]"
-                  )}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-black tracking-tight text-lg group-hover:text-[var(--gold)] transition-colors">{stock.symbol}</span>
-                    <div className={cn(
-                      "text-xs font-bold px-1.5 py-0.5 rounded",
-                      isUp ? "bg-[#00ff88]/10 text-[#00ff88]" : "bg-[#ff4d4d]/10 text-[#ff4d4d]"
-                    )}>
-                      {isUp ? "+" : ""}{stock.changePercent}%
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end">
-                    <div className="text-2xl font-black text-slate-200 font-mono">
-                      {formatCurrency(stock.price)}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
-                        <span>Yield</span>
-                        <span className="scale-75 opacity-50">殖利率</span>
-                      </div>
-                      <div className={cn(
-                        "text-sm font-bold font-mono",
-                        valuation.status === 'EXTREME_CHEAP' || valuation.status === 'UNDERVALUED' ? "text-[var(--rise)]" : "text-slate-400"
-                      )}>
-                        {stock.yield}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {valuation.status === 'EXTREME_CHEAP' && (
-                    <div className="absolute top-0 right-0 p-1">
-                      <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
-                    </div>
-                  )}
-                </div>
+  {
+    valuation.status === 'EXTREME_CHEAP' && (
+      <div className="absolute top-0 right-0 p-1">
+        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
+      </div>
+    )
+  }
+                </div >
               );
-            })}
-          </div>
+})}
+          </div >
         )}
-      </section>
+      </section >
 
-      {/* Empty State */}
-      {!loading && filteredStocks.length === 0 && (
-        <div className="py-20 text-center">
-          <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
-            <RefreshCw className="text-slate-400" />
-          </div>
-          <p className="text-slate-500 font-bold">No data found. Is the database scraping running?</p>
-        </div>
-      )}
-
-      {/* Detail Panel */}
-      <StockDetailPanel
-        symbol={selectedStock}
-        onClose={() => setSelectedStock(null)}
-      />
+  {/* Empty State */ }
+{
+  !loading && filteredStocks.length === 0 && (
+    <div className="py-20 text-center">
+      <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
+        <RefreshCw className="text-slate-400" />
+      </div>
+      <p className="text-slate-500 font-bold">No data found. Is the database scraping running?</p>
     </div>
+  )
+}
+
+{/* Detail Panel */ }
+<StockDetailPanel
+  symbol={selectedStock}
+  onClose={() => setSelectedStock(null)}
+/>
+    </div >
   );
 }

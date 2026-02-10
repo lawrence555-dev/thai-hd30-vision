@@ -30,6 +30,27 @@ interface ChartPoint {
     price: number;
 }
 
+const SECTOR_TRANSLATIONS: Record<string, string> = {
+    "Energy": "能源",
+    "Banking": "銀行",
+    "Information & Communication Technology": "資通訊",
+    "Transportation & Logistics": "運輸物流",
+    "Commerce": "商業",
+    "Property Development": "地產開發",
+    "Food & Beverage": "食品飲料",
+    "Health Care Services": "醫療服務",
+    "Construction Services": "營建服務",
+    "Electronic Components": "電子零組件",
+    "Resources": "資源",
+    "Services": "服務",
+    "Technology": "科技",
+    "Financials": "金融",
+    "Agro & Food Industry": "農工食品",
+    "Industrials": "工業",
+    "Consumer Products": "消費品",
+    "Property & Construction": "地產營建",
+};
+
 export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelProps) {
     const [details, setDetails] = useState<StockDetails | null>(null);
     const [chartData, setChartData] = useState<ChartPoint[]>([]);
@@ -107,25 +128,45 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 });
             } else {
                 // Generate Mock Intraday Data for Demo/Vision purpose if real data is sparse
-                // Start from opening price (e.g. current price +/- 2%)
+                // Thai Market Hours: 10:00-12:30, 14:30-16:30
                 const basePrice = Number(latestLog.price) || 100;
-                const points = 50;
-                const now = new Date();
-                const startTime = new Date(now.getTime() - points * 5 * 60000); // 50 points, 5 mins apart
 
-                let currentPrice = basePrice;
-                for (let i = 0; i < points; i++) {
-                    // Random walk
-                    const change = (Math.random() - 0.5) * (basePrice * 0.005);
-                    currentPrice += change;
-                    const time = new Date(startTime.getTime() + i * 5 * 60000);
-                    const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+                const generateMockPoints = () => {
+                    const points: ChartPoint[] = [];
+                    let price = basePrice;
 
-                    formattedChartData.push({
-                        time: timeStr,
-                        price: Number(currentPrice.toFixed(2))
-                    });
-                }
+                    // Morning Session: 10:00 - 12:30 (150 mins -> let's take every 5 mins = 30 pts)
+                    for (let h = 10; h <= 12; h++) {
+                        for (let m = 0; m < 60; m += 5) {
+                            if (h === 12 && m > 30) break; // Stop at 12:30
+
+                            const change = (Math.random() - 0.5) * (basePrice * 0.005);
+                            price += change;
+                            points.push({
+                                time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
+                                price: Number(price.toFixed(2))
+                            });
+                        }
+                    }
+
+                    // Afternoon Session: 14:30 - 16:30 (120 mins -> 24 pts)
+                    for (let h = 14; h <= 16; h++) {
+                        for (let m = 0; m < 60; m += 5) {
+                            if (h === 14 && m < 30) continue; // Start at 14:30
+                            if (h === 16 && m > 30) break; // Stop at 16:30
+
+                            const change = (Math.random() - 0.5) * (basePrice * 0.005);
+                            price += change;
+                            points.push({
+                                time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
+                                price: Number(price.toFixed(2))
+                            });
+                        }
+                    }
+                    return points;
+                };
+
+                formattedChartData = generateMockPoints();
             }
 
             setChartData(formattedChartData);
@@ -220,7 +261,12 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                 Sector <span className="opacity-50">產業</span>
                                             </span>
                                         </div>
-                                        <div className="text-xl font-bold text-white">{details.sector}</div>
+                                        <div className="text-xl font-bold text-white">
+                                            {details.sector}
+                                            <span className="block text-xs text-slate-500 font-normal mt-1">
+                                                {SECTOR_TRANSLATIONS[details.sector] || ""}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
