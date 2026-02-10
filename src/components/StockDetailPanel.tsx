@@ -250,11 +250,11 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                         </div>
                                     </div>
                                     <p className="text-slate-300 leading-relaxed text-sm">
-                                        {details.symbol} currently shows a dividend yield of <span className="text-[var(--gold)] font-bold">{details.yield}%</span>,
-                                        compared to its 5-year average of {details.avgYield}%.
+                                        {details.symbol} 目前顯示股息殖利率為 <span className="text-[var(--gold)] font-bold">{details.yield}%</span>，
+                                        與其五年平均值 {details.avgYield}% 相比。
                                         {details.yield > details.avgYield
-                                            ? "The stock appears to be potentially undervalued based on yield comparison."
-                                            : "The stock is trading below its historical yield average."}
+                                            ? "根據殖利率比較，該股票目前似乎被低估，具有投資潛力。"
+                                            : "該股票目前的交易價格低於其歷史平均殖利率水平。"}
                                     </p>
                                 </div>
                             </div>

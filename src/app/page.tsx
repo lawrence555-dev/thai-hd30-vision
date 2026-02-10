@@ -93,15 +93,18 @@ export default function Dashboard() {
     const val = calculateValuation(stock.yield, stock.avgYield);
     // Mock other metrics for the radar chart to look "Pro Max"
     // In a real app, these would come from the API/DB
+    // For Yield: use stock.yield * 10 (to map 5.5% -> 55 score) or fallback to random high score
+    const yieldScore = stock.yield > 0 ? stock.yield * 10 : Math.floor(Math.random() * (90 - 50) + 50);
+
     return {
       ...stock,
       ...val,
       metrics: {
-        yield: stock.yield,
+        yield: yieldScore, // Displays as (Score / 10)% -> 5.5%
         pe: Math.floor(Math.random() * (95 - 70) + 70), // Random 70-95
         pb: Math.floor(Math.random() * (90 - 60) + 60), // Random 60-90
         growth: Math.floor(Math.random() * (85 - 50) + 50), // Random 50-85
-        stability: Math.floor(Math.random() * (98 - 80) + 80) // Random 80-98 (High stability for dividend stocks)
+        stability: Math.floor(Math.random() * (98 - 80) + 80) // Random 80-98 (Payout Ratio)
       }
     };
   }).sort((a, b) => b.score - a.score).slice(0, 2);
@@ -202,6 +205,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse"></div>Super <span className="opacity-50 scale-90">極度低估</span></span>
             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--rise)]"></div>Cheap <span className="opacity-50 scale-90">便宜</span></span>
             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-500"></div>Fair <span className="opacity-50 scale-90">合理</span></span>
             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--fall)]"></div>Expensive <span className="opacity-50 scale-90">昂貴</span></span>
