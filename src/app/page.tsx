@@ -247,38 +247,41 @@ export default function Dashboard() {
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-white font-bold text-base tracking-tight ring-1 ring-white/10">
                         {stock.symbol}
                       </div>
+                      {/* Removed Full Name to reduce clutter and whitespace */}
                       <div>
-                        <h3 className="text-white font-bold text-sm">{stock.name}</h3>
-                        <p className="text-slate-500 text-xs">{stock.sector}</p>
+                        <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">{stock.sector}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-white font-bold text-sm">{stock.price.toFixed(2)}</p>
+                        <p className="text-white font-bold text-base font-mono tracking-tight">{stock.price.toFixed(2)}</p>
                         <p className={cn("text-xs font-bold", isUp ? "text-rise" : "text-fall")}>
                           {isUp ? '+' : ''}{stock.change.toFixed(2)} ({isUp ? '+' : ''}{stock.changePercent.toFixed(2)}%)
                         </p>
                       </div>
+
+                      {/* Yield Circle */}
                       <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold",
-                        valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)] text-black',
-                        valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)] text-black',
-                        valuation.status === 'FAIR_VALUE' && 'bg-slate-500 text-white',
-                        valuation.status === 'OVERVALUED' && 'bg-[var(--fall)] text-black',
-                        valuation.status === 'UNKNOWN' && 'bg-slate-700 text-white'
+                        "w-14 h-14 rounded-full flex flex-col items-center justify-center border-2",
+                        valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]',
+                        valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]',
+                        valuation.status === 'FAIR' && 'bg-slate-500/10 border-slate-500 text-slate-300',
+                        valuation.status === 'OVERVALUED' && 'bg-[var(--fall)]/10 border-[var(--fall)] text-[var(--fall)]',
+                        (valuation.status === 'UNKNOWN' || !valuation.status) && 'bg-slate-700/10 border-slate-700 text-slate-500'
                       )}>
-                        {stock.yield} %
+                        <span className="text-sm font-black leading-none">{stock.yield}%</span>
+                        <span className="text-[9px] font-bold uppercase opacity-80 leading-none mt-0.5">Yield</span>
                       </div>
                     </div>
 
                     {
                       valuation.status === 'EXTREME_CHEAP' && (
-                        <div className="absolute top-0 right-0 p-1">
-                          <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
+                        <div className="absolute top-2 right-2">
+                          <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_8px_var(--gold)]"></div>
                         </div>
                       )
                     }
@@ -292,41 +295,50 @@ export default function Dashboard() {
                   key={stock.id}
                   onClick={() => setSelectedStock(stock.symbol)}
                   className={cn(
-                    "glass p-4 rounded-xl flex flex-col justify-between gap-2 cursor-pointer relative",
+                    "glass p-4 rounded-xl flex flex-col justify-between gap-4 cursor-pointer relative hover:scale-[1.02] transition-transform",
                     getBorderColor()
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md bg-white/5 flex items-center justify-center text-white font-bold text-xs">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-1">
+                      {/* Symbol in Box */}
+                      <div className="px-3 py-1.5 rounded-lg bg-white/5 w-fit text-white font-black text-sm tracking-tight ring-1 ring-white/10">
                         {stock.symbol}
                       </div>
-                      <h3 className="text-white font-bold text-sm">{stock.name}</h3>
+                      <p className="text-slate-500 text-[10px] font-medium uppercase tracking-wider pl-1">{stock.sector}</p>
                     </div>
+
+                    {/* Yield Circle - Enlarged for Grid */}
                     <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)] text-black',
-                      valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)] text-black',
-                      valuation.status === 'FAIR_VALUE' && 'bg-slate-500 text-white',
-                      valuation.status === 'OVERVALUED' && 'bg-[var(--fall)] text-black',
-                      valuation.status === 'UNKNOWN' && 'bg-slate-700 text-white'
+                      "w-16 h-16 rounded-full flex flex-col items-center justify-center border-2 shrink-0",
+                      valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]',
+                      valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]',
+                      valuation.status === 'FAIR' && 'bg-slate-500/10 border-slate-500 text-slate-300',
+                      valuation.status === 'OVERVALUED' && 'bg-[var(--fall)]/10 border-[var(--fall)] text-[var(--fall)]',
+                      (valuation.status === 'UNKNOWN' || !valuation.status) && 'bg-slate-700/10 border-slate-700 text-slate-500'
                     )}>
-                      {stock.yield} %
+                      <span className="text-base font-black leading-none">{stock.yield}%</span>
+                      <span className="text-[10px] font-bold uppercase opacity-80 leading-none mt-0.5">Yield</span>
                     </div>
                   </div>
-                  <div className="flex items-end justify-between">
+
+                  <div className="flex items-end justify-between border-t border-white/5 pt-3">
                     <div>
-                      <p className="text-white font-bold text-lg leading-none">{stock.price.toFixed(2)}</p>
+                      <div className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Price</div>
+                      <p className="text-white font-bold text-xl font-mono leading-none">{formatCurrency(stock.price)}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Change</div>
                       <p className={cn("text-xs font-bold", isUp ? "text-rise" : "text-fall")}>
                         {isUp ? '+' : ''}{stock.change.toFixed(2)} ({isUp ? '+' : ''}{stock.changePercent.toFixed(2)}%)
                       </p>
                     </div>
-                    <p className="text-slate-500 text-xs">{stock.sector}</p>
                   </div>
+
                   {
                     valuation.status === 'EXTREME_CHEAP' && (
-                      <div className="absolute top-0 right-0 p-1">
-                        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
+                      <div className="absolute top-2 right-2">
+                        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_8px_var(--gold)]"></div>
                       </div>
                     )
                   }
