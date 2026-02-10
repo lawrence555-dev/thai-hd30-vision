@@ -22,6 +22,7 @@ interface StockDetails {
     changePercent: number;
     yield: number;
     avgYield: number;
+    dividends?: any[];
 }
 
 interface ChartPoint {
