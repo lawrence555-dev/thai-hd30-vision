@@ -92,7 +92,7 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
 
             if (priceLogs && priceLogs.length > 5) {
                 formattedChartData = priceLogs.map((log: any) => ({
-                    time: new Date(log.captured_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    time: new Date(log.captured_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                     price: Number(log.price)
                 }));
             } else {
@@ -111,7 +111,7 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                     const time = new Date(startTime.getTime() + i * 5 * 60000);
 
                     formattedChartData.push({
-                        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
                         price: Number(currentPrice.toFixed(2))
                     });
                 }
