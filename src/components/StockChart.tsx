@@ -14,78 +14,45 @@ interface StockChartProps {
 export default function StockChart({
     data,
     isUp,
-    height = 300,
-    enableGrid = true,
-    enableCrosshair = true,
+    data: ChartPoint[];
+    color?: string;
+}
 
-}: StockChartProps) {
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<IChartApi | null>(null);
+    export const StockChart: React.FC<StockChartProps> = ({ data, color = '#22c55e' }) => {
+        const chartContainerRef = useRef<HTMLDivElement>(null);
+        const chartRef = useRef<IChartApi | null>(null);
 
-    // Design System Colors
-    const upColor = "#00ff88"; // Rise Green
-    const downColor = "#ff4d4d"; // Fall Red
-    const lineColor = isUp ? upColor : downColor;
-    const topColor = isUp ? "rgba(0, 255, 136, 0.4)" : "rgba(255, 77, 77, 0.4)";
-    const bottomColor = "rgba(0, 0, 0, 0)"; // Fade to transparent
+        useEffect(() => {
+            if (!chartContainerRef.current) return;
 
-    useEffect(() => {
-        if (!chartContainerRef.current) return;
+            const handleResize = () => {
+                if (chartContainerRef.current && chartRef.current) {
+                    chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+                }
+            };
 
-        const handleResize = () => {
-            if (chartRef.current && chartContainerRef.current) {
-                chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-            }
-        };
-
-        const chart = createChart(chartContainerRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: "transparent" },
-                textColor: "#a3a3a3", // neutral-400
-            },
-            width: chartContainerRef.current.clientWidth || 400, // Fallback width
-            height: height,
-            grid: {
-                vertLines: { visible: enableGrid, color: "rgba(255, 255, 255, 0.05)" },
-                horzLines: { visible: enableGrid, color: "rgba(255, 255, 255, 0.05)" },
-            },
-            // ... (rest of config)
-            timeScale: {
-                visible: true,
-                timeVisible: true,
-                secondsVisible: false,
-                borderColor: "rgba(255, 255, 255, 0.1)",
-            },
-            rightPriceScale: {
-                visible: true,
-                borderColor: "rgba(255, 255, 255, 0.1)",
-                scaleMargins: { top: 0.1, bottom: 0.1 },
-            },
-            handleScale: {
-                axisPressedMouseMove: false,
-                mouseWheel: false,
-                pinch: false,
-            },
-            handleScroll: {
-                mouseWheel: false,
-                pressedMouseMove: false,
-                horzTouchDrag: false,
-                vertTouchDrag: false,
-            },
-            crosshair: {
-                vertLine: {
-                    visible: enableCrosshair,
-                    color: "#ffffff",
-                    width: 1,
-                    style: 3,
-                    labelBackgroundColor: "#262626",
+            const chart = createChart(chartContainerRef.current, {
+                layout: {
+                    background: { type: ColorType.Solid, color: 'transparent' },
+                    textColor: '#94a3b8',
                 },
-                horzLine: {
-                    visible: enableCrosshair,
-                    color: "#ffffff",
-                    width: 1,
-                    style: 3,
-                    labelBackgroundColor: "#262626",
+                width: chartContainerRef.current.clientWidth,
+                height: 300,
+                grid: {
+                    vertLines: { visible: false },
+                    horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                },
+                rightPriceScale: {
+                    borderVisible: false,
+                    scaleMargins: {
+                        top: 0.1,
+                        bottom: 0.1,
+                    },
+                },
+                timeScale: {
+                    borderVisible: false,
+                    timeVisible: true,
+                    secondsVisible: false,
                 },
             },
         });
@@ -140,5 +107,5 @@ export default function StockChart({
         };
     }, [data, isUp, height, lineColor, topColor, bottomColor, enableGrid, enableCrosshair]);
 
-    return <div ref={chartContainerRef} className="w-full relative uppercase" style={{ height }} />;
+return <div ref={chartContainerRef} className="w-full relative uppercase" style={{ height }} />;
 }

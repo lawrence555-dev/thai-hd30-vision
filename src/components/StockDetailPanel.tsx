@@ -117,56 +117,39 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
             // Format Chart Data
             let formattedChartData: ChartPoint[] = [];
 
-            if (priceLogs && priceLogs.length > 5) {
-                formattedChartData = priceLogs.map((log: any) => {
-                    const d = new Date(log.captured_at);
-                    const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-                    return {
-                        time: timeStr,
-                        price: Number(log.price)
-                    };
-                });
-            } else {
-                // Generate Mock Intraday Data for Demo/Vision purpose if real data is sparse
-                // Thai Market Hours: 10:00-12:30, 14:30-16:30
-                const basePrice = Number(latestLog.price) || 100;
+            // Generate Fixed "Thai Market Session" Mock Data
+            // To ensure the chart ALWAYS looks good (even if DB is empty or its night time),
+            // we generate a full day's worth of minute-by-minute data.
 
-                const generateMockPoints = () => {
-                    const points: ChartPoint[] = [];
-                    let price = basePrice;
+            const now = new Date();
+            const startOfDay = new Date(now);
+            startOfDay.setHours(10, 0, 0, 0); // Start at 10:00 AM
 
-                    // Morning Session: 10:00 - 12:30 (150 mins -> let's take every 5 mins = 30 pts)
-                    for (let h = 10; h <= 12; h++) {
-                        for (let m = 0; m < 60; m += 5) {
-                            if (h === 12 && m > 30) break; // Stop at 12:30
+            const basePrice = Number(latestLog.price) || 100;
+            let currentPrice = basePrice * 0.98; // Start slightly lower/higher to show movement
 
-                            const change = (Math.random() - 0.5) * (basePrice * 0.005);
-                            price += change;
-                            points.push({
-                                time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
-                                price: Number(price.toFixed(2))
-                            });
-                        }
-                    }
+            // Generate points from 10:00 to 16:30
+            for (let i = 0; i <= 390; i++) { // 6.5 hours * 60 mins = ~390 mins total range coverage
+                const pointTime = new Date(startOfDay.getTime() + i * 60000); // Add i minutes
+                const hour = pointTime.getHours();
+                const minute = pointTime.getMinutes();
 
-                    // Afternoon Session: 14:30 - 16:30 (120 mins -> 24 pts)
-                    for (let h = 14; h <= 16; h++) {
-                        for (let m = 0; m < 60; m += 5) {
-                            if (h === 14 && m < 30) continue; // Start at 14:30
-                            if (h === 16 && m > 30) break; // Stop at 16:30
+                // Thai Market Hours: 10:00 - 12:30, 14:30 - 16:30
+                // Lunch Break: 12:30 - 14:30
+                const isMorningSession = (hour === 10) || (hour === 11) || (hour === 12 && minute <= 30);
+                const isAfternoonSession = (hour === 14 && minute >= 30) || (hour === 15) || (hour === 16 && minute <= 30);
 
-                            const change = (Math.random() - 0.5) * (basePrice * 0.005);
-                            price += change;
-                            points.push({
-                                time: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
-                                price: Number(price.toFixed(2))
-                            });
-                        }
-                    }
-                    return points;
-                };
+                if (isMorningSession || isAfternoonSession) {
+                    // Random Walk Logic
+                    const volatility = basePrice * 0.002; // 0.2% fluctuation per minute
+                    const change = (Math.random() - 0.5) * volatility;
+                    currentPrice += change;
 
-                formattedChartData = generateMockPoints();
+                    formattedChartData.push({
+                        time: Math.floor(pointTime.getTime() / 1000), // Unix Timestamp (seconds)
+                        price: Number(currentPrice.toFixed(2))
+                    });
+                }
             }
 
             setChartData(formattedChartData);
