@@ -240,44 +240,120 @@ export default function Dashboard() {
                 return (
                   <div
                     key={stock.id}
-                      )
-              }>
-                { stock.yield } %
+                    onClick={() => setSelectedStock(stock.symbol)}
+                    className={cn(
+                      "glass p-4 rounded-xl flex items-center justify-between gap-4 cursor-pointer relative",
+                      getBorderColor()
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white font-bold text-sm">
+                        {stock.symbol}
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold text-sm">{stock.name}</h3>
+                        <p className="text-slate-500 text-xs">{stock.sector}</p>
                       </div>
                     </div>
-                  </div >
 
-  {
-    valuation.status === 'EXTREME_CHEAP' && (
-      <div className="absolute top-0 right-0 p-1">
-        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
-      </div>
-    )
-  }
-                </div >
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-white font-bold text-sm">{stock.price.toFixed(2)}</p>
+                        <p className={cn("text-xs font-bold", isUp ? "text-rise" : "text-fall")}>
+                          {isUp ? '+' : ''}{stock.change.toFixed(2)} ({isUp ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+                        </p>
+                      </div>
+                      <div className={cn(
+                        "w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold",
+                        valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)] text-black',
+                        valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)] text-black',
+                        valuation.status === 'FAIR_VALUE' && 'bg-slate-500 text-white',
+                        valuation.status === 'OVERVALUED' && 'bg-[var(--fall)] text-black',
+                        valuation.status === 'UNKNOWN' && 'bg-slate-700 text-white'
+                      )}>
+                        {stock.yield} %
+                      </div>
+                    </div>
+
+                    {
+                      valuation.status === 'EXTREME_CHEAP' && (
+                        <div className="absolute top-0 right-0 p-1">
+                          <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
+                        </div>
+                      )
+                    }
+                  </div>
+                );
+              }
+
+              // GRID VIEW ITEM
+              return (
+                <div
+                  key={stock.id}
+                  onClick={() => setSelectedStock(stock.symbol)}
+                  className={cn(
+                    "glass p-4 rounded-xl flex flex-col justify-between gap-2 cursor-pointer relative",
+                    getBorderColor()
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-md bg-white/5 flex items-center justify-center text-white font-bold text-xs">
+                        {stock.symbol}
+                      </div>
+                      <h3 className="text-white font-bold text-sm">{stock.name}</h3>
+                    </div>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                      valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)] text-black',
+                      valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)] text-black',
+                      valuation.status === 'FAIR_VALUE' && 'bg-slate-500 text-white',
+                      valuation.status === 'OVERVALUED' && 'bg-[var(--fall)] text-black',
+                      valuation.status === 'UNKNOWN' && 'bg-slate-700 text-white'
+                    )}>
+                      {stock.yield} %
+                    </div>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-white font-bold text-lg leading-none">{stock.price.toFixed(2)}</p>
+                      <p className={cn("text-xs font-bold", isUp ? "text-rise" : "text-fall")}>
+                        {isUp ? '+' : ''}{stock.change.toFixed(2)} ({isUp ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+                      </p>
+                    </div>
+                    <p className="text-slate-500 text-xs">{stock.sector}</p>
+                  </div>
+                  {
+                    valuation.status === 'EXTREME_CHEAP' && (
+                      <div className="absolute top-0 right-0 p-1">
+                        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_5px_var(--gold)]"></div>
+                      </div>
+                    )
+                  }
+                </div>
               );
-})}
+            })}
           </div >
         )}
       </section >
 
-  {/* Empty State */ }
-{
-  !loading && filteredStocks.length === 0 && (
-    <div className="py-20 text-center">
-      <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
-        <RefreshCw className="text-slate-400" />
-      </div>
-      <p className="text-slate-500 font-bold">No data found. Is the database scraping running?</p>
-    </div>
-  )
-}
+      {/* Empty State */}
+      {
+        !loading && filteredStocks.length === 0 && (
+          <div className="py-20 text-center">
+            <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
+              <RefreshCw className="text-slate-400" />
+            </div>
+            <p className="text-slate-500 font-bold">No data found. Is the database scraping running?</p>
+          </div>
+        )
+      }
 
-{/* Detail Panel */ }
-<StockDetailPanel
-  symbol={selectedStock}
-  onClose={() => setSelectedStock(null)}
-/>
+      {/* Detail Panel */}
+      <StockDetailPanel
+        symbol={selectedStock}
+        onClose={() => setSelectedStock(null)}
+      />
     </div >
   );
 }
