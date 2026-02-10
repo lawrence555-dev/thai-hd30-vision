@@ -154,7 +154,9 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                 {isUp ? "+" : ""}{details.change} ({details.changePercent}%)
                                             </span>
                                         </div>
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Real-time</div>
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                            Real-time <span className="opacity-50">即時</span>
+                                        </div>
                                     </div>
                                     <div className="h-[350px] -mx-2">
                                         {chartData.length > 0 ? (
@@ -172,17 +174,24 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <Calendar size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-widest">Sector</span>
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                Sector <span className="opacity-50">產業</span>
+                                            </span>
                                         </div>
                                         <div className="text-xl font-bold text-white">{details.sector}</div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <DollarSign size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-widest">Dividend Yield</span>
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                Dividend Yield <span className="opacity-50">殖利率</span>
+                                            </span>
                                         </div>
                                         <div className="text-xl font-bold text-[var(--gold)]">{details.yield}%</div>
-                                        <div className="text-sm text-slate-500 mt-1">5Y Avg: {details.avgYield}%</div>
+                                        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            5Y Avg: {details.avgYield}%
+                                            <span className="opacity-50 scale-90">五年平均</span>
+                                        </div>
                                     </div>
                                 </div>
 

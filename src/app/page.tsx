@@ -105,7 +105,10 @@ export default function Dashboard() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight">Thai-HD30 Vision</h1>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">SETHD Intelligence Terminal</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+              SETHD Intelligence Terminal
+              <span className="opacity-50">智慧終端</span>
+            </p>
           </div>
         </div>
 
@@ -114,7 +117,7 @@ export default function Dashboard() {
             <Search size={16} />
             <input
               type="text"
-              placeholder="Search Quote..."
+              placeholder="Search Quote / 搜尋代號"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-slate-600 font-bold"
@@ -158,7 +161,10 @@ export default function Dashboard() {
       <section className="mb-10">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="text-rise" size={20} />
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Top Undervalued Picks</h2>
+          <div>
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-none">Top Undervalued Picks</h2>
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">精選低估潛力股</span>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {loading ? (
@@ -191,12 +197,15 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <LayoutGrid className="text-slate-400" size={20} />
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">SETHD Market Monitor</h2>
+            <div>
+              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-none">SETHD Market Monitor</h2>
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">SETHD 市場雷達</span>
+            </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--rise)]"></div>Cheap</span>
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-500"></div>Fair</span>
-            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--fall)]"></div>Expensive</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--rise)]"></div>Cheap <span className="opacity-50 scale-90">便宜</span></span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-500"></div>Fair <span className="opacity-50 scale-90">合理</span></span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[var(--fall)]"></div>Expensive <span className="opacity-50 scale-90">昂貴</span></span>
           </div>
         </div>
 
@@ -245,17 +254,26 @@ export default function Dashboard() {
 
                     <div className="flex items-center gap-4 md:gap-8">
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Price</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
+                          <span>Price</span>
+                          <span className="scale-75 opacity-50">股價</span>
+                        </div>
                         <div className="font-mono text-slate-200 font-bold">{formatCurrency(stock.price, currency)}</div>
                       </div>
                       <div className="text-right w-16 md:w-20">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Change</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
+                          <span>Change</span>
+                          <span className="scale-75 opacity-50">漲跌</span>
+                        </div>
                         <div className={cn("font-mono text-sm font-bold", isUp ? "text-[var(--rise)]" : "text-[var(--fall)]")}>
                           {isUp ? "+" : ""}{stock.changePercent}%
                         </div>
                       </div>
                       <div className="text-right w-16 md:w-20">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Yield</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
+                          <span>Yield</span>
+                          <span className="scale-75 opacity-50">殖利率</span>
+                        </div>
                         <div className={cn("font-mono text-sm font-bold", valuation.status === 'EXTREME_CHEAP' ? "text-[var(--gold)]" : "text-slate-400")}>
                           {stock.yield}%
                         </div>
@@ -291,7 +309,10 @@ export default function Dashboard() {
                       {formatCurrency(stock.price, currency)}
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] text-slate-500 uppercase font-bold">Yield</div>
+                      <div className="text-[10px] text-slate-500 uppercase font-bold flex flex-col items-end leading-none gap-0.5">
+                        <span>Yield</span>
+                        <span className="scale-75 opacity-50">殖利率</span>
+                      </div>
                       <div className={cn(
                         "text-sm font-bold font-mono",
                         valuation.status === 'EXTREME_CHEAP' || valuation.status === 'UNDERVALUED' ? "text-[var(--rise)]" : "text-slate-400"
