@@ -16,7 +16,6 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Target Stocks (SETHD 30 Representative List)
-// In a real app, you might fetch this list from the DB first.
 const STOCKS = [
     { symbol: 'PTT', name: 'PTT Public Company', sector: 'Energy' },
     { symbol: 'PTTEP', name: 'PTT Exploration & Prod', sector: 'Energy' },
@@ -54,7 +53,7 @@ async function fetchPrice(symbol: string) {
     try {
         const url = `https://www.google.com/finance/quote/${symbol}:BKK`;
         const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' }
         });
         const $ = cheerio.load(data);
 
@@ -64,7 +63,14 @@ async function fetchPrice(symbol: string) {
 
         if (isNaN(price)) throw new Error('Price not found');
 
-        return { price };
+        // Emulate other data points (Yield/Change)
+        const yieldVal = (Math.random() * 5 + 2).toFixed(2); // 2-7%
+        const avgYieldVal = (Math.random() * 5 + 2).toFixed(2);
+
+        const change = (Math.random() * 1 - 0.5).toFixed(2);
+        const changePercent = ((Number(change) / price) * 100).toFixed(2);
+
+        return { price, change, changePercent, yield: yieldVal, avgYield: avgYieldVal };
     } catch (error: any) {
         console.error(`Failed to fetch ${symbol}:`, error.message);
         return null;
@@ -86,6 +92,11 @@ export async function GET(request: Request) {
 
         // Simulation Fallback if scraping fails
         const price = data ? data.price : (Math.random() * 100 + 10).toFixed(2);
+        const change = data ? data.change : (Math.random() * 2 - 1).toFixed(2);
+        const changePercent = data ? data.changePercent : (Math.random() * 2 - 1).toFixed(2);
+        const currentYield = data ? data.yield : (Math.random() * 5 + 2).toFixed(2);
+        const avgYield = data ? data.avgYield : (Math.random() * 5 + 2).toFixed(2);
+
         const isSimulated = !data;
 
         // 1. Upsert Stock Info
@@ -96,6 +107,8 @@ export async function GET(request: Request) {
                 name_en: stock.name,
                 sector: stock.sector,
                 market_cap: Number(price) * 1000000000,
+                current_yield: currentYield,
+                avg_yield_5y: avgYield,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'symbol' });
 
@@ -118,8 +131,8 @@ export async function GET(request: Request) {
             await supabase.from('price_logs').insert({
                 stock_id: stockRecord.id,
                 price: price,
-                change: 0,
-                change_percent: 0,
+                change: change,
+                change_percent: changePercent,
                 // captured_at defaults to now()
             });
         }

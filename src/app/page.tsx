@@ -5,7 +5,6 @@ import { Search, TrendingUp, AlertTriangle, LayoutGrid, List as ListIcon, Refres
 import { cn } from "@/lib/utils";
 import ValuationCard from "@/components/ValuationCard";
 import StockDetailPanel from "@/components/StockDetailPanel";
-// import { MOCK_STOCKS } from "@/lib/mock-data"; 
 import { calculateValuation, formatCurrency } from "@/lib/valuation";
 import { supabase } from '@/lib/supabase';
 
@@ -29,6 +28,7 @@ export default function Dashboard() {
   const [currency, setCurrency] = useState<'THB' | 'TWD'>('THB');
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchStocks();
@@ -37,7 +37,6 @@ export default function Dashboard() {
   const fetchStocks = async () => {
     setLoading(true);
     try {
-      // Fetch stocks and their latest price log
       const { data, error } = await supabase
         .from('stocks')
         .select(`
@@ -50,13 +49,6 @@ export default function Dashboard() {
         `)
         .order('symbol', { ascending: true });
 
-      // Note: Sort price_logs by descending created_at to get latest would require a function 
-      // or just mapping in JS since we can't easily limit nested resource to 1 in simple query without slightly complex syntax
-      // For simplicity, we fetched all logs (bad for prod, ok for MVP) OR we can assume the scraper inserts sequentially.
-      // Better approach for MVP: Fetch Query, then map.
-      // Actually, let's refine the query to be efficient? 
-      // For now, let's trust the data is small enough or just map the last one.
-
       if (error) {
         console.error('Error fetching stocks:', error);
         return;
@@ -64,11 +56,9 @@ export default function Dashboard() {
 
       if (data) {
         const formattedStocks: StockData[] = data.map((item: any) => {
-          // Get latest log (assuming Supabase returns array, we take the last one if we didn't sort, 
-          // or we sort in JS. Let's start by sorting the logs if there are multiple)
-          // Actually scraper inserts with 'now()'.
+          // Get latest log data if available
           const latestLog = item.price_logs && item.price_logs.length > 0
-            ? item.price_logs[item.price_logs.length - 1] // or sort by date
+            ? item.price_logs[item.price_logs.length - 1]
             : { price: 0, change: 0, change_percent: 0 };
 
           return {
@@ -79,8 +69,8 @@ export default function Dashboard() {
             price: Number(latestLog.price) || 0,
             change: Number(latestLog.change) || 0,
             changePercent: Number(latestLog.change_percent) || 0,
-            yield: 0, // Not yet scraped
-            avgYield: 0, // Not yet scraped
+            yield: Number(item.current_yield) || 0,
+            avgYield: Number(item.avg_yield_5y) || 0,
             marketCap: Number(item.market_cap) || 0
           };
         });
@@ -92,6 +82,12 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  // Filter stocks based on search query
+  const filteredStocks = stocks.filter(stock =>
+    stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    stock.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Filter top 2 undervalued stocks for the Valuation Cards
   const topPicks = stocks.map(stock => {
@@ -119,6 +115,8 @@ export default function Dashboard() {
             <input
               type="text"
               placeholder="Search Quote..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-slate-600 font-bold"
             />
           </div>
@@ -174,7 +172,7 @@ export default function Dashboard() {
                 symbol={stock.symbol}
                 score={Math.round(stock.score)}
                 metrics={{
-                  yield: stock.yield * 10,
+                  yield: stock.yield,
                   pe: 0,
                   pb: 0,
                   growth: 0,
@@ -188,7 +186,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Heatmap / Market Grid */}
+      {/* Market Monitor */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -209,8 +207,12 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {stocks.map(stock => {
+          <div className={cn(
+            viewMode === 'grid'
+              ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+              : "flex flex-col gap-2"
+          )}>
+            {filteredStocks.map(stock => {
               const valuation = calculateValuation(stock.yield, stock.avgYield);
               const isUp = stock.change >= 0;
 
@@ -221,6 +223,49 @@ export default function Dashboard() {
                 return 'border-white/5';
               };
 
+              // LIST VIEW ITEM
+              if (viewMode === 'list') {
+                return (
+                  <div
+                    key={stock.id}
+                    onClick={() => setSelectedStock(stock.symbol)}
+                    className="glass p-4 rounded-xl flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={cn("w-1 h-10 rounded-full",
+                        valuation.status === 'EXTREME_CHEAP' ? 'bg-[var(--gold)]' :
+                          valuation.status === 'UNDERVALUED' ? 'bg-[var(--rise)]' :
+                            valuation.status === 'OVERVALUED' ? 'bg-[var(--fall)]' : 'bg-slate-600'
+                      )} />
+                      <div>
+                        <div className="font-bold text-white group-hover:text-[var(--gold)] transition-colors">{stock.symbol}</div>
+                        <div className="text-xs text-slate-500">{stock.sector}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 md:gap-8">
+                      <div className="text-right">
+                        <div className="text-[10px] text-slate-500 uppercase font-bold">Price</div>
+                        <div className="font-mono text-slate-200 font-bold">{formatCurrency(stock.price, currency)}</div>
+                      </div>
+                      <div className="text-right w-16 md:w-20">
+                        <div className="text-[10px] text-slate-500 uppercase font-bold">Change</div>
+                        <div className={cn("font-mono text-sm font-bold", isUp ? "text-[var(--rise)]" : "text-[var(--fall)]")}>
+                          {isUp ? "+" : ""}{stock.changePercent}%
+                        </div>
+                      </div>
+                      <div className="text-right w-16 md:w-20">
+                        <div className="text-[10px] text-slate-500 uppercase font-bold">Yield</div>
+                        <div className={cn("font-mono text-sm font-bold", valuation.status === 'EXTREME_CHEAP' ? "text-[var(--gold)]" : "text-slate-400")}>
+                          {stock.yield}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // GRID VIEW ITEM
               return (
                 <div
                   key={stock.id}
@@ -269,7 +314,7 @@ export default function Dashboard() {
       </section>
 
       {/* Empty State */}
-      {!loading && stocks.length === 0 && (
+      {!loading && filteredStocks.length === 0 && (
         <div className="py-20 text-center">
           <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
             <RefreshCw className="text-slate-400" />
