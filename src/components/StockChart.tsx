@@ -43,12 +43,13 @@ export default function StockChart({
                 background: { type: ColorType.Solid, color: "transparent" },
                 textColor: "#a3a3a3", // neutral-400
             },
-            width: chartContainerRef.current.clientWidth,
+            width: chartContainerRef.current.clientWidth || 400, // Fallback width
             height: height,
             grid: {
                 vertLines: { visible: enableGrid, color: "rgba(255, 255, 255, 0.05)" },
                 horzLines: { visible: enableGrid, color: "rgba(255, 255, 255, 0.05)" },
             },
+            // ... (rest of config)
             timeScale: {
                 visible: true,
                 timeVisible: true,
@@ -110,9 +111,20 @@ export default function StockChart({
         }
 
         chartRef.current = chart;
-        window.addEventListener("resize", handleResize);
+
+        // ResizeObserver for robust sizing
+        const resizeObserver = new ResizeObserver(entries => {
+            if (entries.length === 0 || !entries[0].contentRect) return;
+            const { width } = entries[0].contentRect;
+            if (width > 0) {
+                chart.applyOptions({ width });
+            }
+        });
+
+        resizeObserver.observe(chartContainerRef.current);
+
         return () => {
-            window.removeEventListener("resize", handleResize);
+            resizeObserver.disconnect();
             chart.remove();
         };
     }, [data, isUp, height, lineColor, topColor, bottomColor, enableGrid, enableCrosshair]);
