@@ -22,6 +22,10 @@ interface StockDetails {
     changePercent: number;
     yield: number;
     avgYield: number;
+    pe: number;
+    pb: number;
+    payoutRatio: number;
+    profitGrowth: number;
     dividends?: any[];
 }
 
@@ -113,6 +117,10 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 changePercent: Number(latestLog.change_percent),
                 yield: Number(stockData.current_yield) || 0,
                 avgYield: Number(stockData.avg_yield_5y) || 0,
+                pe: Number(stockData.pe) || 0,
+                pb: Number(stockData.pb) || 0,
+                payoutRatio: Number(stockData.payout_ratio) || 0,
+                profitGrowth: Number(stockData.net_profit_growth_yoy) || 0,
                 dividends: divHistory || []
             });
 
@@ -252,9 +260,9 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                 本益比 <span className="opacity-50">P/E</span>
                                             </span>
                                         </div>
-                                        <div className="text-xl font-bold text-white">{(Math.random() * 5 + 8).toFixed(1)}</div>
+                                        <div className="text-xl font-bold text-white">{details.pe > 0 ? details.pe.toFixed(1) : '-'}</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            低於同業
+                                            {details.pe < 15 ? '低於平均' : '高於平均'}
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
@@ -264,9 +272,23 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                 股價淨值比 <span className="opacity-50">P/B</span>
                                             </span>
                                         </div>
-                                        <div className="text-xl font-bold text-white">{(Math.random() * 0.5 + 0.8).toFixed(1)}</div>
+                                        <div className="text-xl font-bold text-white">{details.pb > 0 ? details.pb.toFixed(1) : '-'}</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            低估
+                                            {details.pb < 1.5 ? '低估' : '高估'}
+                                        </div>
+                                    </div>
+                                    <div className="glass-card p-5">
+                                        <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                            <Activity size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                淨利成長 <span className="opacity-50">Growth</span>
+                                            </span>
+                                        </div>
+                                        <div className={cn("text-xl font-bold", details.profitGrowth >= 0 ? "text-rise" : "text-fall")}>
+                                            {details.profitGrowth > 0 ? '+' : ''}{details.profitGrowth.toFixed(1)}%
+                                        </div>
+                                        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            {details.profitGrowth >= 5 ? '✅ 穩健成長' : details.profitGrowth < 0 ? '⚠️ 獲利衰退' : '持平'}
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
@@ -276,9 +298,11 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                 派息配發率 <span className="opacity-50">Payout</span>
                                             </span>
                                         </div>
-                                        <div className="text-xl font-bold text-[var(--gold)]">{(Math.random() * 20 + 40).toFixed(0)}%</div>
+                                        <div className={cn("text-xl font-bold", details.payoutRatio > 100 ? "text-fall" : "text-[var(--gold)]")}>
+                                            {details.payoutRatio.toFixed(0)}%
+                                        </div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            健康
+                                            {details.payoutRatio > 100 ? '⚠️ 配息過高' : '健康區間'}
                                         </div>
                                     </div>
                                 </div>
