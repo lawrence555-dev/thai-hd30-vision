@@ -31,6 +31,7 @@ export default function Dashboard() {
   // Wait, the error said `searchTerm` is not defined in JSX.
   // So I should rename this to searchTerm.
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSector, setSelectedSector] = useState<string>('All');
 
   useEffect(() => {
     fetchStocks();
