@@ -20,6 +20,16 @@ interface StockData {
   yield: number;
   avgYield: number;
   marketCap: number;
+  // Added fields for stable valuation
+  score: number;
+  valuationStatus: string;
+  fairValue: string | number;
+  metrics: {
+    pe: number;
+    pb: number;
+    growth: number;
+    stability: number;
+  };
 }
 
 export default function Dashboard() {
@@ -74,9 +84,47 @@ export default function Dashboard() {
             changePercent: Number(latestLog.change_percent) || 0,
             yield: Number(item.current_yield) || 0,
             avgYield: Number(item.avg_yield_5y) || 0,
-            marketCap: Number(item.market_cap) || 0
-          };
-        });
+            // Generate simulated metrics ONCE during fetch
+            const simulatedMetrics = {
+              pe: Math.floor(Math.random() * (25 - 8) + 8),
+              pb: (Math.random() * (4 - 0.5) + 0.5),
+              payoutRatio: Math.floor(Math.random() * (120 - 30) + 30),
+              revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
+              net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
+            };
+
+            const val = calculateValuation({
+              ...item,
+              ...simulatedMetrics,
+              current_yield: Number(item.current_yield) || 0,
+              avg_yield_5y: Number(item.avg_yield_5y) || 0,
+              pe: simulatedMetrics.pe,
+              pb: simulatedMetrics.pb,
+              payout_ratio: simulatedMetrics.payoutRatio,
+            });
+
+            return {
+              id: item.id,
+              symbol: item.symbol,
+              name: item.name_en || item.symbol,
+              sector: item.sector || 'Unknown',
+              price: Number(latestLog.price) || 0,
+              change: Number(latestLog.change) || 0,
+              changePercent: Number(latestLog.change_percent) || 0,
+              yield: Number(item.current_yield) || 0,
+              avgYield: Number(item.avg_yield_5y) || 0,
+              marketCap: Number(item.market_cap) || 0,
+              score: val.score,
+              valuationStatus: val.status,
+              fairValue: val.fairValue,
+              metrics: {
+                pe: simulatedMetrics.pe,
+                pb: simulatedMetrics.pb,
+                growth: simulatedMetrics.net_profit_growth_yoy,
+                stability: simulatedMetrics.payoutRatio
+              }
+            };
+          });
         setStocks(formattedStocks);
       }
     } catch (err) {
