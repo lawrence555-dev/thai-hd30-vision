@@ -132,8 +132,8 @@ export default function Dashboard() {
             <input
               type="text"
               placeholder="Search Quote / 搜尋代號"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-slate-600 font-bold"
             />
           </div>
