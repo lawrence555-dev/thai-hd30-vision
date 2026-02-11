@@ -85,11 +85,16 @@ export default function Dashboard() {
     }
   };
 
-  // Filter stocks based on search query
-  const filteredStocks = stocks.filter(stock =>
-    stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    stock.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extract Unique Sectors
+  const sectors = ['All', ...Array.from(new Set(stocks.map(s => s.sector || 'Others'))).sort()];
+
+  // Filter stocks based on search query and sector
+  const filteredStocks = stocks.filter(stock => {
+    const matchesSearch = stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (stock.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSector = selectedSector === 'All' || stock.sector === selectedSector;
+    return matchesSearch && matchesSector;
+  });
 
   // Filter top 2 undervalued stocks for the Valuation Cards
   const topPicks = stocks.map(stock => {
