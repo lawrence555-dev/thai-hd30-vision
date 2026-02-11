@@ -49,6 +49,8 @@ const SECTOR_TRANSLATIONS: Record<string, string> = {
     "Industrials": "工業",
     "Consumer Products": "消費品",
     "Property & Construction": "地產營建",
+    "Property": "地產",
+    "Utilities": "公用事業",
 };
 
 export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelProps) {
@@ -114,42 +116,25 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 dividends: divHistory || []
             });
 
-            // Format Chart Data
+            // Format Chart Data from Real DB Logs
             let formattedChartData: ChartPoint[] = [];
 
-            // Generate Fixed "Thai Market Session" Mock Data
-            // To ensure the chart ALWAYS looks good (even if DB is empty or its night time),
-            // we generate a full day's worth of minute-by-minute data.
-
-            const now = new Date();
-            const startOfDay = new Date(now);
-            startOfDay.setHours(10, 0, 0, 0); // Start at 10:00 AM
-
-            const basePrice = Number(latestLog.price) || 100;
-            let currentPrice = basePrice * 0.98; // Start slightly lower/higher to show movement
-
-            // Generate points from 10:00 to 16:30
-            for (let i = 0; i <= 390; i++) { // 6.5 hours * 60 mins = ~390 mins total range coverage
-                const pointTime = new Date(startOfDay.getTime() + i * 60000); // Add i minutes
-                const hour = pointTime.getHours();
-                const minute = pointTime.getMinutes();
-
-                // Thai Market Hours: 10:00 - 12:30, 14:30 - 16:30
-                // Lunch Break: 12:30 - 14:30
-                const isMorningSession = (hour === 10) || (hour === 11) || (hour === 12 && minute <= 30);
-                const isAfternoonSession = (hour === 14 && minute >= 30) || (hour === 15) || (hour === 16 && minute <= 30);
-
-                if (isMorningSession || isAfternoonSession) {
-                    // Random Walk Logic
-                    const volatility = basePrice * 0.002; // 0.2% fluctuation per minute
-                    const change = (Math.random() - 0.5) * volatility;
-                    currentPrice += change;
-
-                    formattedChartData.push({
-                        time: Math.floor(pointTime.getTime() / 1000), // Unix Timestamp (seconds)
-                        price: Number(currentPrice.toFixed(2))
-                    });
-                }
+            if (priceLogs && priceLogs.length > 0) {
+                formattedChartData = priceLogs.map(log => {
+                    const time = new Date(log.captured_at).getTime() / 1000;
+                    return {
+                        time: Math.floor(time),
+                        price: Number(log.price)
+                    };
+                });
+            } else {
+                // Fallback if no logs: Show single point or empty to avoid crash
+                // But better to show nothing/loading state in UI if empty.
+                // For now, push current price as a single point line
+                formattedChartData.push({
+                    time: Math.floor(Date.now() / 1000),
+                    price: Number(latestLog.price) || 0
+                });
             }
 
             setChartData(formattedChartData);
@@ -241,66 +226,59 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <Calendar size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                Sector <span className="opacity-50">產業</span>
+                                                產業 <span className="opacity-50">Sector</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-white">
-                                            {details.sector}
-                                            <span className="block text-xs text-slate-500 font-normal mt-1">
-                                                {SECTOR_TRANSLATIONS[details.sector] || ""}
-                                            </span>
+                                            {SECTOR_TRANSLATIONS[details.sector] || details.sector}
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <DollarSign size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                Dividend Yield <span className="opacity-50">殖利率</span>
+                                                殖利率 <span className="opacity-50">Yield</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-[var(--gold)]">{details.yield}%</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            5Y Avg: {details.avgYield}%
-                                            <span className="opacity-50 scale-90">五年平均</span>
+                                            五年平均: {details.avgYield}%
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <Activity size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                P/E Ratio <span className="opacity-50">本益比</span>
+                                                本益比 <span className="opacity-50">P/E</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-white">{(Math.random() * 5 + 8).toFixed(1)}</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            vs Sector: 12.5
-                                            <span className="opacity-50 scale-90">低於同業</span>
+                                            低於同業
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <Activity size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                P/B Ratio <span className="opacity-50">房價淨值比</span>
+                                                股價淨值比 <span className="opacity-50">P/B</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-white">{(Math.random() * 0.5 + 0.8).toFixed(1)}</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            Undervalued
-                                            <span className="opacity-50 scale-90">低估</span>
+                                            低估
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <DollarSign size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                Payout Ratio <span className="opacity-50">派息配發率</span>
+                                                派息配發率 <span className="opacity-50">Payout</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-[var(--gold)]">{(Math.random() * 20 + 40).toFixed(0)}%</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            Healthy
-                                            <span className="opacity-50 scale-90">健康</span>
+                                            健康
                                         </div>
                                     </div>
                                 </div>
