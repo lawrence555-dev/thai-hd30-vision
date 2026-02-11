@@ -84,28 +84,22 @@ export const StockChart: React.FC<StockChartProps> = ({
         });
 
         if (data.length > 0) {
-            // Sort data by time safely
-            const sortedData = [...data].sort((a, b) => {
-                // Assuming time is in "HH:MM" format for sorting
-                const [h1, m1] = a.time.split(':').map(Number);
-                const [h2, m2] = b.time.split(':').map(Number);
-                return (h1 * 60 + m1) - (h2 * 60 + m2);
-            });
+            // Sort data by time safely (data is already unix timestamp numbers)
+            const sortedData = [...data].sort((a, b) => a.time - b.time);
 
-            const today = new Date();
-            const chartData = sortedData.map(d => {
-                const [h, m] = d.time.split(':').map(Number);
-                const date = new Date(today);
-                date.setHours(h, m, 0, 0);
-                return {
-                    time: Math.floor(date.getTime() / 1000) as any,
-                    value: d.price
-                };
-            }).filter((item, index, self) =>
-                index === self.findIndex((t) => t.time === item.time)
-            ).sort((a, b) => (a.time as number) - (b.time as number));
-
-            newSeries.setData(chartData);
+            // Ensure unique times
+            const uniqueData = [];
+            const seenTimes = new Set();
+            for (const item of sortedData) {
+                if (!seenTimes.has(item.time)) {
+                    seenTimes.add(item.time);
+                    uniqueData.push({
+                        time: item.time as any, // Cast to any to satisfy v3 interface if needed
+                        value: item.price
+                    });
+                }
+            }
+            newSeries.setData(uniqueData);
             chart.timeScale().fitContent();
         }
 
