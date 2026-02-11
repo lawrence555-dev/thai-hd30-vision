@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, IChartApi, UTCTimestamp } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, UTCTimestamp, AreaSeries } from 'lightweight-charts';
 import React from 'react';
 
 interface ChartPoint {
@@ -69,19 +69,18 @@ export const StockChart: React.FC<StockChartProps> = ({
         // Determine line color based on trend (First vs Last)
         let lineColor = '#22c55e'; // Default green
         if (data.length >= 2) {
-            // Assuming data[0].value and data[data.length - 1].value are the prices
-            const first = data[0].value;
-            const last = data[data.length - 1].value;
-            lineColor = last >= first ? '#22c55e' : '#ef4444'; // Rise (Green) / Fall (Red)
+            const first = data[0].price;
+            const last = data[data.length - 1].price;
+            lineColor = last >= first ? '#22c55e' : '#ef4444';
         }
 
-        const newSeries = chart.addAreaSeries({
+        const newSeries = chart.addSeries(AreaSeries, {
             lineColor: lineColor,
             topColor: `${lineColor}20`, // low opacity
             bottomColor: 'rgba(0, 0, 0, 0)', // transparent
             lineWidth: 2,
             priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-            crosshairMarkerVisible: false, // Fixed from 'enableCrosshair'
+            crosshairMarkerVisible: false,
         });
 
         if (data.length > 0) {
@@ -99,8 +98,8 @@ export const StockChart: React.FC<StockChartProps> = ({
                 const date = new Date(today);
                 date.setHours(h, m, 0, 0);
                 return {
-                    time: (date.getTime() / 1000) as Time,
-                    value: d.value
+                    time: Math.floor(date.getTime() / 1000) as any,
+                    value: d.price
                 };
             }).filter((item, index, self) =>
                 index === self.findIndex((t) => t.time === item.time)
