@@ -35,13 +35,13 @@ export default function ValuationCard({ symbol, score, metrics }: ValuationCardP
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <h3 className="text-2xl font-black tracking-tighter">{symbol}</h3>
-                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Valuation Model</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">估值模型 (Valuation)</p>
                 </div>
                 <div className="text-right">
                     <div className={cn("text-4xl font-black font-mono", getScoreColor(score))}>
-                        {score}
+                        {score} <span className="text-sm text-slate-500 font-normal">/ 100</span>
                     </div>
-                    <div className="text-[10px] text-slate-400 uppercase tracking-widest">Total Score</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-widest">綜合評分 (Total Score)</div>
                 </div>
             </div>
 

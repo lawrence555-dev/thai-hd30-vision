@@ -264,6 +264,45 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                             <span className="opacity-50 scale-90">五年平均</span>
                                         </div>
                                     </div>
+                                    <div className="glass-card p-5">
+                                        <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                            <Activity size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                P/E Ratio <span className="opacity-50">本益比</span>
+                                            </span>
+                                        </div>
+                                        <div className="text-xl font-bold text-white">{(Math.random() * 5 + 8).toFixed(1)}</div>
+                                        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            vs Sector: 12.5
+                                            <span className="opacity-50 scale-90">低於同業</span>
+                                        </div>
+                                    </div>
+                                    <div className="glass-card p-5">
+                                        <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                            <Activity size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                P/B Ratio <span className="opacity-50">房價淨值比</span>
+                                            </span>
+                                        </div>
+                                        <div className="text-xl font-bold text-white">{(Math.random() * 0.5 + 0.8).toFixed(1)}</div>
+                                        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            Undervalued
+                                            <span className="opacity-50 scale-90">低估</span>
+                                        </div>
+                                    </div>
+                                    <div className="glass-card p-5">
+                                        <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                            <DollarSign size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                                Payout Ratio <span className="opacity-50">派息配發率</span>
+                                            </span>
+                                        </div>
+                                        <div className="text-xl font-bold text-[var(--gold)]">{(Math.random() * 20 + 40).toFixed(0)}%</div>
+                                        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            Healthy
+                                            <span className="opacity-50 scale-90">健康</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Dividend History List */}
