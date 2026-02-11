@@ -127,7 +127,7 @@ export const StockChart: React.FC<StockChartProps> = ({
             resizeObserver.disconnect();
             chart.remove();
         };
-    }, [data, height, lineColor, topColor, bottomColor, enableGrid, enableCrosshair]);
+    }, [data, height, enableGrid, enableCrosshair]);
 
     return <div ref={chartContainerRef} className="w-full relative uppercase" style={{ height }} />;
 }
