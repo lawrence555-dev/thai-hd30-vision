@@ -188,7 +188,17 @@ export default function Dashboard() {
                   : "bg-black/40 text-slate-400 border-white/10 hover:border-white/30 hover:text-white"
               )}
             >
-              {sector}
+              {sector === 'All' ? '全部' :
+                sector === 'Banking' ? '銀行' :
+                  sector === 'Energy' ? '能源' :
+                    sector === 'Construction' ? '營建' :
+                      sector === 'Commerce' ? '商業' :
+                        sector === 'Food' ? '食品' :
+                          sector === 'Health Care' ? '醫療' :
+                            sector === 'ICT' ? '資通' :
+                              sector === 'Property' ? '地產' :
+                                sector === 'Transport' ? '運輸' :
+                                  sector === 'Others' ? '其他' : sector}
             </button>
           ))}
         </div>
