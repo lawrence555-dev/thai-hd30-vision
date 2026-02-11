@@ -27,7 +27,10 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Keep as searchQuery if JSX reverted, OR change to searchTerm if JSX uses searchTerm.
+  // Wait, the error said `searchTerm` is not defined in JSX.
+  // So I should rename this to searchTerm.
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchStocks();
