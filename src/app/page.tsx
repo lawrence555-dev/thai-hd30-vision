@@ -165,6 +165,26 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* SECTOR TABS (New Feature) */}
+      <div className="overflow-x-auto pb-6 scrollbar-hide">
+        <div className="flex gap-2">
+          {sectors.map((sector) => (
+            <button
+              key={sector}
+              onClick={() => setSelectedSector(sector)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all border",
+                selectedSector === sector
+                  ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                  : "bg-black/40 text-slate-400 border-white/10 hover:border-white/30 hover:text-white"
+              )}
+            >
+              {sector}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Top Picks Row */}
       <section className="mb-10">
         <div className="flex items-center gap-2 mb-4">
