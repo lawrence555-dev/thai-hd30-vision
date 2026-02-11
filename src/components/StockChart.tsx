@@ -14,7 +14,15 @@ interface StockChartProps {
     color?: string;
 }
 
-export const StockChart: React.FC<StockChartProps> = ({ data, color = '#22c55e' }) => {
+export const StockChart: React.FC<StockChartProps> = ({
+    data,
+    color = '#22c55e',
+    height = 300,
+    enableGrid = false,
+    enableCrosshair = false,
+    topColor,
+    bottomColor
+}) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
 
