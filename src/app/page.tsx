@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, TrendingUp, AlertTriangle, LayoutGrid, List as ListIcon, RefreshCw } from "lucide-react";
+import { Search, TrendingUp, AlertTriangle, LayoutGrid, List as ListIcon, RefreshCw, Activity, DollarSign, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ValuationCard from "@/components/ValuationCard";
 import StockDetailPanel from "@/components/StockDetailPanel";
@@ -37,9 +37,6 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(''); // Keep as searchQuery if JSX reverted, OR change to searchTerm if JSX uses searchTerm.
-  // Wait, the error said `searchTerm` is not defined in JSX.
-  // So I should rename this to searchTerm.
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('All');
 
@@ -74,6 +71,26 @@ export default function Dashboard() {
             ? item.price_logs[item.price_logs.length - 1]
             : { price: 0, change: 0, change_percent: 0 };
 
+          // Generate simulated metrics ONCE during fetch
+          // This ensures the dashboard "Top Picks" and metrics don't change on every render/click
+          const simulatedMetrics = {
+            pe: Math.floor(Math.random() * (25 - 8) + 8),
+            pb: (Math.random() * (4 - 0.5) + 0.5),
+            payoutRatio: Math.floor(Math.random() * (120 - 30) + 30),
+            revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
+            net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
+          };
+
+          const val = calculateValuation({
+            ...item,
+            ...simulatedMetrics,
+            current_yield: Number(item.current_yield) || 0,
+            avg_yield_5y: Number(item.avg_yield_5y) || 0,
+            pe: simulatedMetrics.pe,
+            pb: simulatedMetrics.pb,
+            payout_ratio: simulatedMetrics.payoutRatio,
+          });
+
           return {
             id: item.id,
             symbol: item.symbol,
@@ -84,47 +101,18 @@ export default function Dashboard() {
             changePercent: Number(latestLog.change_percent) || 0,
             yield: Number(item.current_yield) || 0,
             avgYield: Number(item.avg_yield_5y) || 0,
-            // Generate simulated metrics ONCE during fetch
-            const simulatedMetrics = {
-              pe: Math.floor(Math.random() * (25 - 8) + 8),
-              pb: (Math.random() * (4 - 0.5) + 0.5),
-              payoutRatio: Math.floor(Math.random() * (120 - 30) + 30),
-              revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
-              net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
-            };
-
-            const val = calculateValuation({
-              ...item,
-              ...simulatedMetrics,
-              current_yield: Number(item.current_yield) || 0,
-              avg_yield_5y: Number(item.avg_yield_5y) || 0,
+            marketCap: Number(item.market_cap) || 0,
+            score: val.score,
+            valuationStatus: val.status,
+            fairValue: val.fairValue,
+            metrics: {
               pe: simulatedMetrics.pe,
               pb: simulatedMetrics.pb,
-              payout_ratio: simulatedMetrics.payoutRatio,
-            });
-
-            return {
-              id: item.id,
-              symbol: item.symbol,
-              name: item.name_en || item.symbol,
-              sector: item.sector || 'Unknown',
-              price: Number(latestLog.price) || 0,
-              change: Number(latestLog.change) || 0,
-              changePercent: Number(latestLog.change_percent) || 0,
-              yield: Number(item.current_yield) || 0,
-              avgYield: Number(item.avg_yield_5y) || 0,
-              marketCap: Number(item.market_cap) || 0,
-              score: val.score,
-              valuationStatus: val.status,
-              fairValue: val.fairValue,
-              metrics: {
-                pe: simulatedMetrics.pe,
-                pb: simulatedMetrics.pb,
-                growth: simulatedMetrics.net_profit_growth_yoy,
-                stability: simulatedMetrics.payoutRatio
-              }
-            };
-          });
+              growth: simulatedMetrics.net_profit_growth_yoy,
+              stability: simulatedMetrics.payoutRatio
+            }
+          };
+        });
         setStocks(formattedStocks);
       }
     } catch (err) {
@@ -146,36 +134,10 @@ export default function Dashboard() {
   });
 
   // Filter top 2 undervalued stocks for the Valuation Cards
-  const topPicks = stocks.map(stock => {
-    // Simulate real metrics for the dashboard view (until we fetch all real data)
-    // This resolves the "100/100" issue by actually calculating score based on these metrics
-    const simulatedMetrics = {
-      pe: Math.floor(Math.random() * (25 - 8) + 8), // Random PE 8-25
-      pb: (Math.random() * (4 - 0.5) + 0.5), // Random PB 0.5-4
-      payoutRatio: Math.floor(Math.random() * (120 - 30) + 30), // Random Payout 30-120%
-      revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5), // Growth -5 to 20%
-      net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
-    };
-
-    const val = calculateValuation({
-      ...stock,
-      ...simulatedMetrics,
-      current_yield: stock.yield,
-      avg_yield_5y: stock.avgYield
-    });
-
-    return {
-      ...stock,
-      ...val,
-      metrics: {
-        yield: stock.yield,
-        pe: simulatedMetrics.pe,
-        pb: simulatedMetrics.pb,
-        growth: simulatedMetrics.net_profit_growth_yoy,
-        stability: simulatedMetrics.payoutRatio
-      }
-    };
-  }).sort((a, b) => b.score - a.score).slice(0, 2);
+  const topPicks = stocks
+    .filter(s => s.score >= 0) // Ensure valid
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
 
   return (
     <div className="min-h-screen bg-[var(--background)] p-4 md:p-8 pb-32">
@@ -186,114 +148,135 @@ export default function Dashboard() {
             <span className="font-black text-black text-lg">฿</span>
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Thai-HD30 Vision</h1>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-              SETHD Intelligence Terminal
-              <span className="opacity-50">智慧終端</span>
-            </p>
+            <h1 className="text-2xl font-black tracking-tighter text-white">
+              V I S I O N <span className="text-[var(--gold)]">PRO</span>
+            </h1>
+            <p className="text-xs text-slate-500 font-medium tracking-widest uppercase">Thai Stock Analytics</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="glass h-10 px-4 flex items-center gap-2 rounded-lg text-slate-400 min-w-[200px]">
-            <Search size={16} />
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--gold)] transition-colors" size={18} />
             <input
               type="text"
-              placeholder="Search Quote / 搜尋代號"
+              placeholder="Search Symbol..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-slate-600 font-bold"
+              className="pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm font-medium focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-all w-48 md:w-64"
             />
           </div>
+          <button onClick={fetchStocks} className="p-2 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 hover:border-white/20 transition-all text-slate-400 hover:text-white">
+            <RefreshCw size={18} />
+          </button>
+        </div>
+      </header>
 
-          <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* Left Column: Valuation Cards (Top Picks) */}
+        <div className="lg:col-span-8 flex flex-col gap-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <TrendingUp size={20} className="text-[var(--gold)]" />
+                Top Undervalued Picks
+              </h2>
+              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mt-1">精選低估潛力股</p>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-[var(--gold)] text-[10px] font-bold uppercase tracking-wider animate-pulse">
+              AI Recommendation
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {loading ? (
+              <>
+                <div className="glass h-[300px] animate-pulse rounded-3xl bg-white/5" />
+                <div className="glass h-[300px] animate-pulse rounded-3xl bg-white/5" />
+              </>
+            ) : (
+              topPicks.map(stock => (
+                <ValuationCard
+                  key={stock.id}
+                  symbol={stock.symbol}
+                  score={stock.score}
+                  metrics={stock.metrics}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Stats / Market Summary (Placeholder for now, maybe Sector Performance) */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          <div className="glass-card p-6 h-full flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+              <Activity size={120} />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-4">Market Sentiment</h3>
+            <div className="flex-1 flex flex-col justify-center gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-sm font-medium">SET Index</span>
+                <span className="text-white font-mono font-bold">1,388.20</span>
+              </div>
+              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                <div className="bg-[var(--rise)] h-full w-[45%]" />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest">
+                <span>Bearish</span>
+                <span>Neutral</span>
+                <span>Bullish</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Stock List Section */}
+      <div className="mt-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbars-hidden">
+            {sectors.map(sector => (
+              <button
+                key={sector}
+                onClick={() => setSelectedSector(sector)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap",
+                  selectedSector === sector
+                    ? "bg-white text-black shadow-lg shadow-white/10"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {sector}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
             <button
               onClick={() => setViewMode('grid')}
-              className={cn("p-2 rounded transition-colors", viewMode === 'grid' ? "bg-white/10 text-white" : "text-slate-500 hover:text-white")}
+              className={cn(
+                "p-2 rounded-md transition-all",
+                viewMode === 'grid' ? "bg-white/10 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
+              )}
             >
               <LayoutGrid size={18} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={cn("p-2 rounded transition-colors", viewMode === 'list' ? "bg-white/10 text-white" : "text-slate-500 hover:text-white")}
+              className={cn(
+                "p-2 rounded-md transition-all",
+                viewMode === 'list' ? "bg-white/10 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"
+              )}
             >
               <ListIcon size={18} />
             </button>
           </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={fetchStocks}
-              className="glass h-10 w-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition-colors"
-              title="Refresh Data"
-            >
-              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-            </button>
-          </div>
         </div>
-      </header>
 
-      {/* SECTOR TABS (New Feature) */}
-      <div className="overflow-x-auto pb-6 scrollbar-hide">
-        <div className="flex gap-2">
-          {sectors.map((sector) => (
-            <button
-              key={sector}
-              onClick={() => setSelectedSector(sector)}
-              className={cn(
-                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all border",
-                selectedSector === sector
-                  ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]"
-                  : "bg-black/40 text-slate-400 border-white/10 hover:border-white/30 hover:text-white"
-              )}
-            >
-              {sector === 'All' ? '全部' :
-                sector === 'Banking' ? '銀行' :
-                  sector === 'Energy' ? '能源' :
-                    sector === 'Construction' ? '營建' :
-                      sector === 'Commerce' ? '商業' :
-                        sector === 'Food' ? '食品' :
-                          sector === 'Health Care' ? '醫療' :
-                            sector === 'ICT' ? '資通' :
-                              sector === 'Property' ? '地產' :
-                                sector === 'Transport' ? '運輸' :
-                                  sector === 'Others' ? '其他' : sector}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Top Picks Row */}
-      <section className="mb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="text-rise" size={20} />
-          <div>
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-none">Top Undervalued Picks</h2>
-            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">精選低估潛力股</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {loading ? (
-            [1, 2].map(i => (
-              <div key={i} className="glass h-48 rounded-2xl animate-pulse bg-white/5" />
-            ))
-          ) : topPicks.length > 0 ? (
-            topPicks.map(stock => (
-              <ValuationCard
-                key={stock.id}
-                symbol={stock.symbol}
-                score={Math.round(stock.score)}
-                metrics={stock.metrics}
-              />
-            ))
-          ) : (
-            <div className="col-span-2 text-slate-500 text-sm">No data available. Try running the scraper.</div>
-          )}
-        </div>
-      </section>
-
-      {/* Market Monitor */}
-      <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <LayoutGrid className="text-slate-400" size={20} />
@@ -323,13 +306,14 @@ export default function Dashboard() {
               : "flex flex-col gap-2"
           )}>
             {filteredStocks.map(stock => {
-              const valuation = calculateValuation(stock.yield, stock.avgYield);
+              const valuation = calculateValuation({ ...stock, current_yield: stock.yield, avg_yield_5y: stock.avgYield });
               const isUp = stock.change >= 0;
 
               const getBorderColor = () => {
-                if (valuation.status === 'EXTREME_CHEAP') return 'border-[var(--gold)]';
-                if (valuation.status === 'UNDERVALUED') return 'border-[var(--rise)]';
-                if (valuation.status === 'OVERVALUED') return 'border-[var(--fall)]';
+                const s = stock.valuationStatus || valuation.status;
+                if (s === 'EXTREME_CHEAP') return 'border-[var(--gold)]';
+                if (s === 'UNDERVALUED') return 'border-[var(--rise)]';
+                if (s === 'OVERVALUED') return 'border-[var(--fall)]';
                 return 'border-white/5';
               };
 
@@ -362,14 +346,12 @@ export default function Dashboard() {
                         </p>
                       </div>
 
-                      {/* Yield Circle */}
+                      {/* Yield Circle with Dynamic Color */}
                       <div className={cn(
                         "w-14 h-14 rounded-full flex flex-col items-center justify-center border-2",
-                        valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]',
-                        valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]',
-                        valuation.status === 'FAIR' && 'bg-slate-500/10 border-slate-500 text-slate-300',
-                        valuation.status === 'OVERVALUED' && 'bg-[var(--fall)]/10 border-[var(--fall)] text-[var(--fall)]',
-                        (valuation.status === 'UNKNOWN' || !valuation.status) && 'bg-slate-700/10 border-slate-700 text-slate-500'
+                        stock.yield >= 6 ? "bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]" :
+                          stock.yield >= 4 ? "bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]" :
+                            "bg-slate-500/10 border-slate-500 text-slate-300"
                       )}>
                         <span className="text-sm font-black leading-none">{stock.yield}%</span>
                         <span className="text-[9px] font-bold uppercase opacity-80 leading-none mt-0.5">Yield</span>
@@ -377,7 +359,7 @@ export default function Dashboard() {
                     </div>
 
                     {
-                      valuation.status === 'EXTREME_CHEAP' && (
+                      (stock.valuationStatus === 'EXTREME_CHEAP' || stock.yield >= 6) && (
                         <div className="absolute top-2 right-2">
                           <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_8px_var(--gold)]"></div>
                         </div>
@@ -397,73 +379,47 @@ export default function Dashboard() {
                     getBorderColor()
                   )}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col gap-1">
-                      {/* Symbol in Box */}
-                      <div className="px-3 py-1.5 rounded-lg bg-white/5 w-fit text-white font-black text-sm tracking-tight ring-1 ring-white/10">
-                        {stock.symbol}
-                      </div>
-                      <p className="text-slate-500 text-[10px] font-medium uppercase tracking-wider pl-1">{stock.sector}</p>
-                    </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider box-border px-2 py-0.5 rounded border border-white/10 bg-black/20">
+                      {stock.sector}
+                    </span>
+                    {(stock.valuationStatus === 'EXTREME_CHEAP' || stock.yield >= 6) && (
+                      <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_6px_var(--gold)]"></div>
+                    )}
+                  </div>
 
-                    {/* Yield Circle - Enlarged for Grid */}
+                  <div className="text-center my-2">
+                    <div className="text-2xl font-black tracking-tighter text-white mb-1">{stock.symbol}</div>
+                    <div className="text-3xl font-mono font-bold text-white tracking-tight">{stock.price.toFixed(2)}</div>
+                    <div className={cn("text-xs font-bold mt-1", isUp ? "text-rise" : "text-fall")}>
+                      {isUp ? '▲' : '▼'} {Math.abs(stock.change).toFixed(2)} ({stock.changePercent.toFixed(2)}%)
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-white/5">
                     <div className={cn(
-                      "w-16 h-16 rounded-full flex flex-col items-center justify-center border-2 shrink-0",
-                      valuation.status === 'EXTREME_CHEAP' && 'bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]',
-                      valuation.status === 'UNDERVALUED' && 'bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]',
-                      valuation.status === 'FAIR' && 'bg-slate-500/10 border-slate-500 text-slate-300',
-                      valuation.status === 'OVERVALUED' && 'bg-[var(--fall)]/10 border-[var(--fall)] text-[var(--fall)]',
-                      (valuation.status === 'UNKNOWN' || !valuation.status) && 'bg-slate-700/10 border-slate-700 text-slate-500'
+                      "flex-1 h-8 rounded-lg flex items-center justify-center text-xs font-bold border",
+                      stock.yield >= 6 ? "bg-[var(--gold)]/10 border-[var(--gold)] text-[var(--gold)]" :
+                        stock.yield >= 4 ? "bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]" :
+                          "bg-slate-500/10 border-slate-500 text-slate-400"
                     )}>
-                      <span className="text-base font-black leading-none">{stock.yield}%</span>
-                      <span className="text-[10px] font-bold uppercase opacity-80 leading-none mt-0.5">Yield</span>
+                      {stock.yield}% Yield
                     </div>
                   </div>
-
-                  <div className="flex items-end justify-between border-t border-white/5 pt-3">
-                    <div>
-                      <div className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Price</div>
-                      <p className="text-white font-bold text-xl font-mono leading-none">{formatCurrency(stock.price)}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Change</div>
-                      <p className={cn("text-xs font-bold", isUp ? "text-rise" : "text-fall")}>
-                        {isUp ? '+' : ''}{stock.change.toFixed(2)} ({isUp ? '+' : ''}{stock.changePercent.toFixed(2)}%)
-                      </p>
-                    </div>
-                  </div>
-
-                  {
-                    valuation.status === 'EXTREME_CHEAP' && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_8px_var(--gold)]"></div>
-                      </div>
-                    )
-                  }
                 </div>
               );
             })}
-          </div >
-        )}
-      </section >
-
-      {/* Empty State */}
-      {
-        !loading && filteredStocks.length === 0 && (
-          <div className="py-20 text-center">
-            <div className="inline-block p-4 rounded-full bg-white/5 mb-4 animate-spin">
-              <RefreshCw className="text-slate-400" />
-            </div>
-            <p className="text-slate-500 font-bold">No data found. Is the database scraping running?</p>
           </div>
-        )
-      }
+        )}
+      </div>
 
-      {/* Detail Panel */}
-      <StockDetailPanel
-        symbol={selectedStock}
-        onClose={() => setSelectedStock(null)}
-      />
-    </div >
+      {/* Stock Detail Modal */}
+      {selectedStock && (
+        <StockDetailPanel
+          symbol={selectedStock}
+          onClose={() => setSelectedStock(null)}
+        />
+      )}
+    </div>
   );
 }
