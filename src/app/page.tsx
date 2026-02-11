@@ -99,21 +99,32 @@ export default function Dashboard() {
 
   // Filter top 2 undervalued stocks for the Valuation Cards
   const topPicks = stocks.map(stock => {
-    const val = calculateValuation(stock.yield, stock.avgYield);
-    // Mock other metrics for the radar chart to look "Pro Max"
-    // In a real app, these would come from the API/DB
-    // For Yield: use stock.yield * 10 (to map 5.5% -> 55 score) or fallback to random high score
-    const yieldScore = stock.yield > 0 ? stock.yield * 10 : Math.floor(Math.random() * (90 - 50) + 50);
+    // Simulate real metrics for the dashboard view (until we fetch all real data)
+    // This resolves the "100/100" issue by actually calculating score based on these metrics
+    const simulatedMetrics = {
+      pe: Math.floor(Math.random() * (25 - 8) + 8), // Random PE 8-25
+      pb: (Math.random() * (4 - 0.5) + 0.5), // Random PB 0.5-4
+      payoutRatio: Math.floor(Math.random() * (120 - 30) + 30), // Random Payout 30-120%
+      revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5), // Growth -5 to 20%
+      net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
+    };
+
+    const val = calculateValuation({
+      ...stock,
+      ...simulatedMetrics,
+      current_yield: stock.yield,
+      avg_yield_5y: stock.avgYield
+    });
 
     return {
       ...stock,
       ...val,
       metrics: {
-        yield: yieldScore, // Displays as (Score / 10)% -> 5.5%
-        pe: Math.floor(Math.random() * (95 - 70) + 70), // Random 70-95
-        pb: Math.floor(Math.random() * (90 - 60) + 60), // Random 60-90
-        growth: Math.floor(Math.random() * (85 - 50) + 50), // Random 50-85
-        stability: Math.floor(Math.random() * (98 - 80) + 80) // Random 80-98 (Payout Ratio)
+        yield: stock.yield,
+        pe: simulatedMetrics.pe,
+        pb: simulatedMetrics.pb,
+        growth: simulatedMetrics.net_profit_growth_yoy,
+        stability: simulatedMetrics.payoutRatio
       }
     };
   }).sort((a, b) => b.score - a.score).slice(0, 2);
