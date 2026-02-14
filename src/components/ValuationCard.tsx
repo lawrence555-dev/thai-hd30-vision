@@ -65,7 +65,7 @@ export default function ValuationCard({ symbol, score, metrics }: ValuationCardP
             <div className="mt-4 grid grid-cols-2 gap-2">
                 <div className="bg-white/5 p-2 rounded text-center">
                     <span className="block text-[10px] text-slate-400 uppercase">Dividend Yield</span>
-                    <span className="block text-lg font-bold text-rise font-mono">{(metrics.yield / 10).toFixed(1)}%</span>
+                    <span className="block text-lg font-bold text-rise font-mono">{(metrics.yield).toFixed(2)}%</span>
                 </div>
                 <div className="bg-white/5 p-2 rounded text-center">
                     <span className="block text-[10px] text-slate-400 uppercase">Payout Ratio</span>

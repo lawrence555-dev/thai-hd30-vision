@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink, Calendar, DollarSign, Activity } from "lucide-react";
+import { X, ExternalLink, Calendar, DollarSign, Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { StockChart } from './StockChart';
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -30,32 +30,11 @@ interface StockDetails {
 }
 
 interface ChartPoint {
-    time: string;
+    time: number;
     price: number;
 }
 
-const SECTOR_TRANSLATIONS: Record<string, string> = {
-    "Energy": "能源",
-    "Banking": "銀行",
-    "Information & Communication Technology": "資通訊",
-    "Transportation & Logistics": "運輸物流",
-    "Commerce": "商業",
-    "Property Development": "地產開發",
-    "Food & Beverage": "食品飲料",
-    "Health Care Services": "醫療服務",
-    "Construction Services": "營建服務",
-    "Electronic Components": "電子零組件",
-    "Resources": "資源",
-    "Services": "服務",
-    "Technology": "科技",
-    "Financials": "金融",
-    "Agro & Food Industry": "農工食品",
-    "Industrials": "工業",
-    "Consumer Products": "消費品",
-    "Property & Construction": "地產營建",
-    "Property": "地產",
-    "Utilities": "公用事業",
-};
+import { SECTOR_TRANSLATIONS, UI_LABELS } from "@/lib/constants";
 
 export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelProps) {
     const [details, setDetails] = useState<StockDetails | null>(null);
@@ -86,15 +65,56 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
 
             if (stockError) throw stockError;
 
-            // 2. Fetch Price History (Last 50 points for chart)
+            // 2. Fetch Historical Intraday Data (via our new API)
+            // This ensures we have a chart even if we just started tracking
+            let historicalData: ChartPoint[] = [];
+            try {
+                const res = await fetch(`/api/chart-data?symbol=${sym}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.data && Array.isArray(json.data)) {
+                        historicalData = json.data;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch historical chart data:", err);
+            }
+
+            // 3. Fetch Real-Time Price Logs (Local DB)
             const { data: priceLogs, error: logsError } = await supabase
                 .from('price_logs')
-                .select('price, captured_at, change, change_percent')
+                .select('price, captured_at')
                 .eq('stock_id', stockData.id)
-                .order('captured_at', { ascending: true }) // Chart needs chronological order
-                .limit(50); // Limit to recent history for 'intraday' feel
+                .order('captured_at', { ascending: true })
+                .limit(500); // Increased limit
 
-            // 3. Fetch Dividend History
+            if (logsError) throw logsError;
+
+            // 4. Merge Data (Historical + RealTime)
+            // Strategy: Use Historical as base, append RealTime if newer
+            const mergedDataMap = new Map<number, number>();
+
+            // Add historical first
+            historicalData.forEach(pt => mergedDataMap.set(pt.time, pt.price));
+
+            // Add real-time logs (overwrite or append)
+            if (priceLogs) {
+                priceLogs.forEach(log => {
+                    const time = Math.floor(new Date(log.captured_at).getTime() / 1000);
+                    const price = Number(log.price);
+                    // Only add if it's "Today" (roughly, to match 1d view)
+                    // Actually, let's just trust the timestamp.
+                    mergedDataMap.set(time, price);
+                });
+            }
+
+            const finalChartData: ChartPoint[] = Array.from(mergedDataMap.entries())
+                .map(([time, price]) => ({ time, price }))
+                .sort((a, b) => a.time - b.time);
+
+            setChartData(finalChartData);
+
+            // 5. Fetch Dividend History
             const { data: divHistory, error: divError } = await supabase
                 .from('dividend_history')
                 .select('*')
@@ -103,49 +123,23 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
 
             if (divError) throw divError;
 
-            // Process Data
-            const latestLog = priceLogs && priceLogs.length > 0
-                ? priceLogs[priceLogs.length - 1]
-                : { price: 0, change: 0, change_percent: 0 };
-
             setDetails({
                 symbol: stockData.symbol,
                 name: stockData.name_en || stockData.symbol,
-                sector: stockData.sector || 'Unknown',
-                price: Number(latestLog.price) || Number(stockData.market_cap) || 0, // Fallback to market_cap if price is 0 (hacky but prevents 0)
-                change: Number(latestLog.change),
-                changePercent: Number(latestLog.change_percent),
-                yield: Number(stockData.current_yield) || 0,
+                sector: stockData.sector,
+                price: Number(stockData.price) || 0,
+                change: Number(stockData.change) || 0,
+                changePercent: Number(stockData.change_percent) || 0,
+                yield: Number(stockData.current_yield) || 0, // Ensure this matches DB
                 avgYield: Number(stockData.avg_yield_5y) || 0,
-                pe: Number(stockData.pe) || 0,
-                pb: Number(stockData.pb) || 0,
+                pe: Number(stockData.pe_ratio) || 0,
+                pb: Number(stockData.pb_ratio) || 0,
                 payoutRatio: Number(stockData.payout_ratio) || 0,
-                profitGrowth: Number(stockData.net_profit_growth_yoy) || 0,
+                profitGrowth: Number(stockData.profit_growth_yoy) || 0,
                 dividends: divHistory || []
             });
 
-            // Format Chart Data from Real DB Logs
-            let formattedChartData: ChartPoint[] = [];
-
-            if (priceLogs && priceLogs.length > 0) {
-                formattedChartData = priceLogs.map(log => {
-                    const time = new Date(log.captured_at).getTime() / 1000;
-                    return {
-                        time: Math.floor(time),
-                        price: Number(log.price)
-                    };
-                });
-            } else {
-                // Fallback if no logs: Show single point or empty to avoid crash
-                // But better to show nothing/loading state in UI if empty.
-                // For now, push current price as a single point line
-                formattedChartData.push({
-                    time: Math.floor(Date.now() / 1000),
-                    price: Number(latestLog.price) || 0
-                });
-            }
-
-            setChartData(formattedChartData);
+            setChartData(finalChartData);
 
         } catch (error) {
             console.error("Error fetching details:", error);
@@ -204,40 +198,72 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
 
                                 {/* Main Chart */}
                                 <div className="glass-card p-6 border-white/5">
-                                    <div className="flex justify-between items-baseline mb-6">
-                                        <div className="flex items-baseline gap-4">
-                                            <span className="text-5xl font-black font-mono tracking-tight text-white">
-                                                {formatCurrency(details.price)}
-                                            </span>
-                                            <span className={cn("text-xl font-bold font-mono", isUp ? "text-rise" : "text-fall")}>
-                                                {isUp ? "+" : ""}{details.change} ({details.changePercent}%)
+                                    <div className="flex items-baseline gap-3 mb-1">
+                                        <div className="text-5xl font-mono font-bold text-white tracking-tighter shadow-xl">
+                                            {details.price ? details.price.toFixed(2) : "0.00"}
+                                        </div>
+                                        <div className={cn("text-lg font-bold flex items-center", isUp ? "text-rise" : "text-fall")}>
+                                            {isUp ? <TrendingUp size={20} className="mr-1" /> : <TrendingDown size={20} className="mr-1" />}
+                                            {details.change ? (details.change > 0 ? '+' : '') + details.change.toFixed(2) : "0.00"}
+                                            <span className="ml-1 opacity-80">
+                                                ({details.changePercent ? (details.changePercent > 0 ? '+' : '') + details.changePercent.toFixed(2) : "0.00"}%)
                                             </span>
                                         </div>
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                                            Real-time <span className="opacity-50">即時</span>
+                                        <div className="text-xs text-slate-500 font-bold uppercase tracking-widest ml-auto">
+                                            {UI_LABELS.REAL_TIME}
                                         </div>
                                     </div>
-                                    <div className="h-[350px] -mx-2">
-                                        {ready && chartData.length > 0 ? (
-                                            <StockChart data={chartData} isUp={isUp} height={350} />
+
+                                    {/* Chart Area */}
+                                    <div className="h-[320px] w-full mb-6 relative group">
+                                        {ready && chartData && chartData.length > 0 ? (
+                                            (() => {
+                                                // 1. Sort logs by time (chartData already has time in seconds)
+                                                const sortedLogs = [...chartData].sort((a, b) => a.time - b.time);
+
+                                                // 2. Filter for "Last Available Day" (Ensure we show data even if today is a holiday/weekend)
+                                                const lastLogTime = sortedLogs[sortedLogs.length - 1].time * 1000;
+                                                const lastDate = new Date(lastLogTime).toDateString();
+
+                                                const todaysLogs = sortedLogs.filter(log =>
+                                                    new Date(log.time * 1000).toDateString() === lastDate
+                                                );
+
+                                                // 3. Map to Chart Data
+                                                const chartDataPoints = todaysLogs.map(log => ({
+                                                    time: log.time,
+                                                    price: log.price // FIXED: StockChart expects 'price', not 'value'
+                                                }));
+
+                                                return (
+                                                    <StockChart
+                                                        data={chartDataPoints}
+                                                        color={isUp ? '#10B981' : '#EF4444'}
+                                                    />
+                                                );
+                                            })()
                                         ) : (
-                                            <div className="h-full flex items-center justify-center text-slate-500">
-                                                {!ready ? "Loading Chart..." : "Insufficient data for chart"}
-                                            </div>
+                                            <div className="flex items-center justify-center h-full text-slate-600">Waiting for Data...</div>
                                         )}
                                     </div>
-                                </div>
 
-                                {/* Dividend Stats */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="glass-card p-5">
-                                        <div className="flex items-center gap-2 text-slate-400 mb-2">
-                                            <Calendar size={16} />
-                                            <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                產業 <span className="opacity-50">Sector</span>
-                                            </span>
+                                    {/* Key Statistics Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/10 transition-colors">
+                                            <div className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">{UI_LABELS.YIELD} <span className="text-[9px] opacity-70">Yield</span></div>
+                                            <div className={cn("text-xl font-mono font-bold",
+                                                details.yield >= 6 ? "text-[var(--gold)]" : "text-white"
+                                            )}>
+                                                {details.yield ? details.yield.toFixed(2) : "0.00"}%
+                                            </div>
                                         </div>
-                                        <div className="text-xl font-bold text-white">
+                                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-white/10 transition-colors">
+                                            <div className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">{UI_LABELS.PE} <span className="text-[9px] opacity-70">P/E</span></div>
+                                            <div className="text-xl font-mono font-bold text-white">
+                                                {details.pe ? details.pe.toFixed(2) : "N/A"}
+                                            </div>
+                                        </div>
+                                        <div className="text-xl font-bold text-white col-span-2 md:col-span-2 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10">
                                             {SECTOR_TRANSLATIONS[details.sector] || details.sector}
                                         </div>
                                     </div>
@@ -245,19 +271,19 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <DollarSign size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                殖利率 <span className="opacity-50">Yield</span>
+                                                {UI_LABELS.YIELD} <span className="opacity-50">Yield</span>
                                             </span>
                                         </div>
-                                        <div className="text-xl font-bold text-[var(--gold)]">{details.yield}%</div>
+                                        <div className="text-xl font-bold text-[var(--gold)]">{details.yield ? details.yield.toFixed(2) : "0.00"}%</div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            五年平均: {details.avgYield}%
+                                            {UI_LABELS.AVG_YIELD_5Y}: {details.avgYield}%
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
                                         <div className="flex items-center gap-2 text-slate-400 mb-2">
                                             <Activity size={16} />
                                             <span className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                                本益比 <span className="opacity-50">P/E</span>
+                                                {UI_LABELS.PE} <span className="opacity-50">P/E</span>
                                             </span>
                                         </div>
                                         <div className="text-xl font-bold text-white">{details.pe > 0 ? details.pe.toFixed(1) : '-'}</div>
@@ -348,8 +374,8 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                         </div>
                                     </div>
                                     <p className="text-slate-300 leading-relaxed text-sm">
-                                        {details.symbol} 目前顯示股息殖利率為 <span className="text-[var(--gold)] font-bold">{details.yield}%</span>，
-                                        與其五年平均值 {details.avgYield}% 相比。
+                                        {details.symbol} 目前顯示股息殖利率為 <span className="text-[var(--gold)] font-bold">{details.yield ? details.yield.toFixed(2) : "0.00"}%</span>，
+                                        與其五年平均值 {details.avgYield ? details.avgYield.toFixed(2) : "0.00"}% 相比。
                                         {details.yield > details.avgYield
                                             ? "根據殖利率比較，該股票目前似乎被低估，具有投資潛力。"
                                             : "該股票目前的交易價格低於其歷史平均殖利率水平。"}

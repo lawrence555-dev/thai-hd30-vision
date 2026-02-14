@@ -1,0 +1,1 @@
+async function check() { const res = await fetch('http://localhost:3000/api/chart-data?symbol=KBANK'); const json = await res.json(); console.log(JSON.stringify(json.data.slice(0, 5), null, 2)); } check();

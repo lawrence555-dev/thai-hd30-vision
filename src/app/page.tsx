@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, TrendingUp, AlertTriangle, LayoutGrid, List as ListIcon, RefreshCw, Activity, DollarSign, BarChart3 } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, AlertTriangle, LayoutGrid, List as ListIcon, RefreshCw, Activity, DollarSign, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ValuationCard from "@/components/ValuationCard";
 import StockDetailPanel from "@/components/StockDetailPanel";
@@ -32,16 +32,29 @@ interface StockData {
   };
 }
 
+import { SECTOR_TRANSLATIONS } from "@/lib/constants";
+
 export default function Dashboard() {
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [marketStats, setMarketStats] = useState({
+    index: 0,
+    change: 0,
+    percent: 0,
+    high: 0,
+    low: 0
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSector, setSelectedSector] = useState<string>('All');
+  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     fetchStocks();
+
+    // Set initial load time on client side only to avoid hydration mismatch
+    setLastUpdated(new Date().toLocaleString('zh-TW', { hour12: false }));
   }, []);
 
   const fetchStocks = async () => {
@@ -59,6 +72,22 @@ export default function Dashboard() {
         `)
         .order('symbol', { ascending: true });
 
+      // 1. Fetch Market Sentiment (Key-Value Store)
+      const { data: marketData, error: marketError } = await supabase
+        .from('market_summary')
+        .select('*');
+
+      if (!marketError && marketData && marketData.length > 0) {
+        const getVal = (k: string) => Number(marketData.find((r: any) => r.key === k)?.value) || 0;
+        setMarketStats({
+          index: getVal('set_index'),
+          change: getVal('set_change'),
+          percent: getVal('set_change_percent'),
+          high: getVal('set_year_high'),
+          low: getVal('set_year_low'),
+        });
+      }
+
       if (error) {
         console.error('Error fetching stocks:', error);
         return;
@@ -71,24 +100,14 @@ export default function Dashboard() {
             ? item.price_logs[item.price_logs.length - 1]
             : { price: 0, change: 0, change_percent: 0 };
 
-          // Generate simulated metrics ONCE during fetch
-          // This ensures the dashboard "Top Picks" and metrics don't change on every render/click
-          const simulatedMetrics = {
-            pe: Math.floor(Math.random() * (25 - 8) + 8),
-            pb: (Math.random() * (4 - 0.5) + 0.5),
-            payoutRatio: Math.floor(Math.random() * (120 - 30) + 30),
-            revenue_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
-            net_profit_growth_yoy: Math.floor(Math.random() * (20 - -5) + -5),
-          };
-
+          // Use Real Metrics from DB (Upgrade to Commercial Grade)
           const val = calculateValuation({
             ...item,
-            ...simulatedMetrics,
             current_yield: Number(item.current_yield) || 0,
             avg_yield_5y: Number(item.avg_yield_5y) || 0,
-            pe: simulatedMetrics.pe,
-            pb: simulatedMetrics.pb,
-            payout_ratio: simulatedMetrics.payoutRatio,
+            pe: Number(item.pe_ratio) || 0,
+            pb: Number(item.pb_ratio) || 0,
+            payout_ratio: Number(item.payout_ratio) || 0,
           });
 
           return {
@@ -96,9 +115,9 @@ export default function Dashboard() {
             symbol: item.symbol,
             name: item.name_en || item.symbol,
             sector: item.sector || 'Unknown',
-            price: Number(latestLog.price) || 0,
-            change: Number(latestLog.change) || 0,
-            changePercent: Number(latestLog.change_percent) || 0,
+            price: Number(item.price) || Number(latestLog.price) || 0, // Prefer cached price from stocks table if available (Migration 02)
+            change: Number(item.change) || Number(latestLog.change) || 0,
+            changePercent: Number(item.change_percent) || Number(latestLog.change_percent) || 0,
             yield: Number(item.current_yield) || 0,
             avgYield: Number(item.avg_yield_5y) || 0,
             marketCap: Number(item.market_cap) || 0,
@@ -106,10 +125,11 @@ export default function Dashboard() {
             valuationStatus: val.status,
             fairValue: val.fairValue,
             metrics: {
-              pe: simulatedMetrics.pe,
-              pb: simulatedMetrics.pb,
-              growth: simulatedMetrics.net_profit_growth_yoy,
-              stability: simulatedMetrics.payoutRatio
+              yield: Number(item.current_yield) || 0,
+              pe: Number(item.pe_ratio) || 0,
+              pb: Number(item.pb_ratio) || 0,
+              growth: Number(item.profit_growth_yoy) || 0,
+              stability: Number(item.payout_ratio) || 0
             }
           };
         });
@@ -119,6 +139,7 @@ export default function Dashboard() {
       console.error('Failed to fetch:', err);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date().toLocaleString('zh-TW', { hour12: false }));
     }
   };
 
@@ -138,6 +159,15 @@ export default function Dashboard() {
     .filter(s => s.score >= 0) // Ensure valid
     .sort((a, b) => b.score - a.score)
     .slice(0, 2);
+
+  // Calculate Sentiment UI
+  const sentimentPosition = marketStats.high === marketStats.low
+    ? 50
+    : Math.min(100, Math.max(0, ((marketStats.index - marketStats.low) / (marketStats.high - marketStats.low)) * 100));
+
+  const sentimentLabel = sentimentPosition < 33 ? 'Bearish 看空' : sentimentPosition < 66 ? 'Neutral 中立' : 'Bullish 看多';
+  const sentimentColor = sentimentPosition < 33 ? 'text-fall' : sentimentPosition < 66 ? 'text-slate-400' : 'text-rise';
+  const sentimentBarColor = sentimentPosition < 33 ? 'bg-[var(--fall)]' : sentimentPosition < 66 ? 'bg-slate-500' : 'bg-[var(--rise)]';
 
   return (
     <div className="min-h-screen bg-[var(--background)] p-4 md:p-8 pb-32">
@@ -209,30 +239,50 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column: Stats / Market Summary (Placeholder for now, maybe Sector Performance) */}
+        {/* Right Column: Stats / Market Summary */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="glass-card p-6 h-full flex flex-col relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <Activity size={120} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-4">Market Sentiment</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Market Sentiment <span className="text-sm opacity-50 font-normal">市場情緒</span></h3>
             <div className="flex-1 flex flex-col justify-center gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400 text-sm font-medium">SET Index</span>
-                <span className="text-white font-mono font-bold">1,388.20</span>
+                <div>
+                  <span className="text-slate-400 text-sm font-medium block">SET Index <span className="text-xs opacity-50">大盤指數</span></span>
+                  <span className={cn("text-xs font-bold", marketStats.change >= 0 ? "text-rise" : "text-fall")}>
+                    {marketStats.change > 0 ? '+' : ''}{marketStats.change.toFixed(2)} ({marketStats.change > 0 ? '+' : ''}{marketStats.percent.toFixed(2)}%)
+                  </span>
+                </div>
+                <span className="text-white font-mono font-bold text-2xl">{marketStats.index.toFixed(2)}</span>
               </div>
-              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                <div className="bg-[var(--rise)] h-full w-[45%]" />
+
+              {/* Sentiment Gauge */}
+              <div className="relative w-full h-2 rounded-full bg-white/10 overflow-hidden mt-2">
+                <div
+                  className={cn("h-full transition-all duration-1000", sentimentBarColor)}
+                  style={{ width: `${sentimentPosition}%` }}
+                />
               </div>
-              <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest">
-                <span>Bearish</span>
-                <span>Neutral</span>
-                <span>Bullish</span>
+
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-[10px] text-slate-500 font-mono">{marketStats.low.toFixed(0)} <span className="opacity-50">(Year Low)</span></span>
+                <span className={cn("text-xs font-bold uppercase tracking-wider", sentimentColor)}>{sentimentLabel}</span>
+                <span className="text-[10px] text-slate-500 font-mono text-right">{marketStats.high.toFixed(0)} <span className="opacity-50">(Year High)</span></span>
               </div>
+
+              <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-4 opacity-40">
+                <span>Bearish (0-33%)</span>
+                <span>Neutral (33-66%)</span>
+                <span>Bullish (66-100%)</span>
+              </div>
+
+              <p className="text-[10px] text-slate-500 mt-2 text-right border-t border-white/5 pt-2">
+                Last Updated: {lastUpdated}
+              </p>
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Stock List Section */}
@@ -250,7 +300,7 @@ export default function Dashboard() {
                     : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {sector}
+                {SECTOR_TRANSLATIONS[sector] || sector}
               </button>
             ))}
           </div>
@@ -381,7 +431,7 @@ export default function Dashboard() {
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider box-border px-2 py-0.5 rounded border border-white/10 bg-black/20">
-                      {stock.sector}
+                      {SECTOR_TRANSLATIONS[stock.sector] || stock.sector}
                     </span>
                     {(stock.valuationStatus === 'EXTREME_CHEAP' || stock.yield >= 6) && (
                       <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-pulse shadow-[0_0_6px_var(--gold)]"></div>
@@ -391,8 +441,8 @@ export default function Dashboard() {
                   <div className="text-center my-2">
                     <div className="text-2xl font-black tracking-tighter text-white mb-1">{stock.symbol}</div>
                     <div className="text-3xl font-mono font-bold text-white tracking-tight">{stock.price.toFixed(2)}</div>
-                    <div className={cn("text-xs font-bold mt-1", isUp ? "text-rise" : "text-fall")}>
-                      {isUp ? '▲' : '▼'} {Math.abs(stock.change).toFixed(2)} ({stock.changePercent.toFixed(2)}%)
+                    <div className={cn("text-xs font-bold mt-1 flex items-center justify-center gap-1", isUp ? "text-rise" : "text-fall")}>
+                      {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />} {Math.abs(stock.change).toFixed(2)} ({stock.changePercent.toFixed(2)}%)
                     </div>
                   </div>
 
@@ -403,7 +453,7 @@ export default function Dashboard() {
                         stock.yield >= 4 ? "bg-[var(--rise)]/10 border-[var(--rise)] text-[var(--rise)]" :
                           "bg-slate-500/10 border-slate-500 text-slate-400"
                     )}>
-                      {stock.yield}% Yield
+                      {stock.yield.toFixed(2)}% Yield
                     </div>
                   </div>
                 </div>
@@ -414,12 +464,14 @@ export default function Dashboard() {
       </div>
 
       {/* Stock Detail Modal */}
-      {selectedStock && (
-        <StockDetailPanel
-          symbol={selectedStock}
-          onClose={() => setSelectedStock(null)}
-        />
-      )}
-    </div>
+      {
+        selectedStock && (
+          <StockDetailPanel
+            symbol={selectedStock}
+            onClose={() => setSelectedStock(null)}
+          />
+        )
+      }
+    </div >
   );
 }
