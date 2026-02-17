@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export interface TickerItem {
     id: string;
-    type: 'price_surge' | 'price_drop' | 'volume_spike' | 'high_yield' | 'dividend' | 'news_flash';
+    type: 'price_surge' | 'price_drop' | 'volume_spike' | 'high_yield' | 'dividend' | 'news_flash' | 'earnings_report' | 'investor_conference' | 'insider_trading' | 'foreign_flow' | 'technical_signal';
     symbol: string;
     message: string;
     value?: number;

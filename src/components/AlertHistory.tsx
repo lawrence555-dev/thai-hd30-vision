@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, X, TrendingUp, TrendingDown, Zap, AlertCircle } from "lucide-react";
+import { Bell, X, TrendingUp, TrendingDown, Zap, AlertCircle, FileText, Presentation, Users, Globe, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TickerItem } from "./MarketTicker";
 import { fetchRecentAlerts } from "@/lib/ticker-utils";
@@ -47,6 +47,16 @@ export default function AlertHistory({ onAlertClick }: AlertHistoryProps) {
                 return <span className="text-[var(--gold)] font-bold">฿</span>;
             case 'news_flash':
                 return <AlertCircle size={14} className="text-blue-400" />;
+            case 'earnings_report':
+                return <FileText size={14} className="text-green-400" />;
+            case 'investor_conference':
+                return <Presentation size={14} className="text-purple-400" />;
+            case 'insider_trading':
+                return <Users size={14} className="text-orange-400" />;
+            case 'foreign_flow':
+                return <Globe size={14} className="text-cyan-400" />;
+            case 'technical_signal':
+                return <Activity size={14} className="text-pink-400" />;
             default:
                 return null;
         }
