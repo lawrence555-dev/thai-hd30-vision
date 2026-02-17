@@ -138,7 +138,7 @@ export default function AlertHistory({ onAlertClick }: AlertHistoryProps) {
                                                         <span className="text-xs text-slate-500">{getTimeAgo(alert.timestamp)}</span>
                                                     </div>
                                                     <p className="text-sm text-slate-300 line-clamp-2">{alert.message}</p>
-                                                    {alert.changePercent !== undefined && (
+                                                    {alert.changePercent !== undefined && alert.changePercent !== null && (
                                                         <span className={cn(
                                                             "text-xs font-bold mt-1 inline-block",
                                                             alert.changePercent >= 0 ? "text-rise" : "text-fall"
