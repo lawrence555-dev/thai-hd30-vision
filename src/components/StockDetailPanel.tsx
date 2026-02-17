@@ -39,6 +39,7 @@ import { SECTOR_TRANSLATIONS, UI_LABELS } from "@/lib/constants";
 export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelProps) {
     const [details, setDetails] = useState<StockDetails | null>(null);
     const [chartData, setChartData] = useState<ChartPoint[]>([]);
+    const [chartMarkers, setChartMarkers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [ready, setReady] = useState(false); // Validated fix for chart sizing
 
@@ -102,16 +103,123 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                 priceLogs.forEach(log => {
                     const time = Math.floor(new Date(log.captured_at).getTime() / 1000);
                     const price = Number(log.price);
-                    // Only add if it's "Today" (roughly, to match 1d view)
-                    // Actually, let's just trust the timestamp.
                     mergedDataMap.set(time, price);
                 });
             }
 
-            const finalChartData: ChartPoint[] = Array.from(mergedDataMap.entries())
+            // Ensure the current "Head" price is on the chart if valid and newer
+            if (stockData.price && stockData.updated_at) {
+                const lastUpdateTime = Math.floor(new Date(stockData.updated_at).getTime() / 1000);
+                const currentPrice = Number(stockData.price);
+                // Always update/set the latest price from DB to ensure consistency with Header
+                mergedDataMap.set(lastUpdateTime, currentPrice);
+            }
+
+            // Get today's date in Bangkok timezone for comparison
+            const todayBangkok = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+            const rawChartData: ChartPoint[] = Array.from(mergedDataMap.entries())
+                .filter(([time, _]) => {
+                    const date = new Date(time * 1000);
+
+                    // First check: Must be today in Bangkok timezone
+                    const dateBangkok = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+                    if (dateBangkok !== todayBangkok) {
+                        return false;
+                    }
+
+                    // Second check: Must be within trading hours
+                    const thaiTime = date.toLocaleTimeString('en-GB', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                    const [hours, minutes] = thaiTime.split(':').map(Number);
+                    const totalMinutes = hours * 60 + minutes;
+
+                    // Morning: 09:55 (595) - 12:35 (755)
+                    const isMorning = totalMinutes >= 595 && totalMinutes <= 755;
+                    // Afternoon: 14:25 (865) - 16:45 (1005)
+                    const isAfternoon = totalMinutes >= 865 && totalMinutes <= 1005;
+
+                    return isMorning || isAfternoon;
+                })
                 .map(([time, price]) => ({ time, price }))
                 .sort((a, b) => a.time - b.time);
 
+            // Insert whitespace data for lunch break to force time axis to show the gap
+            // Whitespace data = { time: timestamp, value: undefined }
+            const finalChartData: ChartPoint[] = [];
+            const markers: any[] = [];
+
+            let lastMorningPoint: ChartPoint | null = null;
+            let firstAfternoonPoint: ChartPoint | null = null;
+
+            // Separate morning and afternoon data
+            for (const point of rawChartData) {
+                const date = new Date(point.time * 1000);
+                const thaiTime = date.toLocaleTimeString('en-GB', {
+                    timeZone: 'Asia/Bangkok',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const [hours, minutes] = thaiTime.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes;
+
+                if (totalMinutes <= 755) { // Morning session
+                    finalChartData.push(point);
+                    lastMorningPoint = point;
+                } else { // Afternoon session
+                    if (!firstAfternoonPoint) {
+                        firstAfternoonPoint = point;
+                    }
+                }
+            }
+
+            // Insert whitespace data points for lunch break
+            if (lastMorningPoint && firstAfternoonPoint) {
+                // Generate whitespace points every 10 minutes during lunch
+                // This forces the time axis to show the lunch period
+                let currentTime = lastMorningPoint.time + 600; // Start 10 mins after last morning point
+
+                while (currentTime < firstAfternoonPoint.time - 600) {
+                    finalChartData.push({
+                        time: currentTime,
+                        value: undefined as any // Whitespace data - no value
+                    });
+                    currentTime += 600; // Every 10 minutes
+                }
+
+                // Add marker at end of morning session
+                markers.push({
+                    time: lastMorningPoint.time,
+                    position: 'aboveBar',
+                    color: '#94a3b8',
+                    shape: 'arrowDown',
+                    text: '午休時間'
+                });
+            }
+
+            // Add afternoon data
+            for (const point of rawChartData) {
+                const date = new Date(point.time * 1000);
+                const thaiTime = date.toLocaleTimeString('en-GB', {
+                    timeZone: 'Asia/Bangkok',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const [hours, minutes] = thaiTime.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes;
+
+                if (totalMinutes >= 865) { // Afternoon session
+                    finalChartData.push(point);
+                }
+            }
+
+            setChartMarkers(markers);
             setChartData(finalChartData);
 
             // 5. Fetch Dividend History
@@ -123,19 +231,20 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
 
             if (divError) throw divError;
 
+            // Explicitly set header details to match stockData exactly
             setDetails({
                 symbol: stockData.symbol,
                 name: stockData.name_en || stockData.symbol,
                 sector: stockData.sector,
-                price: Number(stockData.price) || 0,
-                change: Number(stockData.change) || 0,
-                changePercent: Number(stockData.change_percent) || 0,
-                yield: Number(stockData.current_yield) || 0, // Ensure this matches DB
-                avgYield: Number(stockData.avg_yield_5y) || 0,
-                pe: Number(stockData.pe_ratio) || 0,
-                pb: Number(stockData.pb_ratio) || 0,
-                payoutRatio: Number(stockData.payout_ratio) || 0,
-                profitGrowth: Number(stockData.profit_growth_yoy) || 0,
+                price: Number(stockData.price), // Direct from DB
+                change: Number(stockData.change),
+                changePercent: Number(stockData.change_percent),
+                yield: Number(stockData.current_yield),
+                avgYield: Number(stockData.avg_yield_5y),
+                pe: Number(stockData.pe_ratio),
+                pb: Number(stockData.pb_ratio),
+                payoutRatio: Number(stockData.payout_ratio),
+                profitGrowth: Number(stockData.profit_growth_yoy),
                 dividends: divHistory || []
             });
 
@@ -235,10 +344,30 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                                     price: log.price // FIXED: StockChart expects 'price', not 'value'
                                                 }));
 
+                                                // Calculate markers for dividends (if details loaded)
+                                                const dividendMarkers = (details && details.dividends)
+                                                    ? details.dividends
+                                                        .filter((div: any) => {
+                                                            const exDate = new Date(div.ex_date);
+                                                            return exDate.toDateString() === lastDate;
+                                                        })
+                                                        .map((div: any) => ({
+                                                            time: Math.floor(new Date(div.ex_date).getTime() / 1000),
+                                                            position: 'aboveBar',
+                                                            color: '#FFD700', // Gold color for dividend markers
+                                                            shape: 'arrowUp',
+                                                            text: `Div: ${div.amount}`
+                                                        }))
+                                                    : [];
+
+                                                // Merge Lunch Markers (from state) + Dividend Markers
+                                                const combinedMarkers = [...chartMarkers, ...dividendMarkers];
+
                                                 return (
                                                     <StockChart
                                                         data={chartDataPoints}
-                                                        color={isUp ? '#10B981' : '#EF4444'}
+                                                        markers={combinedMarkers}
+                                                        color={isUp ? '#ff4d4d' : '#22c55e'}
                                                     />
                                                 );
                                             })()
@@ -314,7 +443,7 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                             {details.profitGrowth > 0 ? '+' : ''}{details.profitGrowth.toFixed(1)}%
                                         </div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            {details.profitGrowth >= 5 ? '✅ 穩健成長' : details.profitGrowth < 0 ? '⚠️ 獲利衰退' : '持平'}
+                                            {details.profitGrowth >= 5 ? '▲ 穩健成長' : details.profitGrowth < 0 ? '▼ 獲利衰退' : '持平'}
                                         </div>
                                     </div>
                                     <div className="glass-card p-5">
@@ -328,7 +457,7 @@ export default function StockDetailPanel({ symbol, onClose }: StockDetailPanelPr
                                             {details.payoutRatio.toFixed(0)}%
                                         </div>
                                         <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
-                                            {details.payoutRatio > 100 ? '⚠️ 配息過高' : '健康區間'}
+                                            {details.payoutRatio > 100 ? '▼ 配息過高' : '健康區間'}
                                         </div>
                                     </div>
                                 </div>

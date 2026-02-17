@@ -9,9 +9,9 @@
   --background: #0a0a0a;
   --foreground: #ededed;
 
-  /* Financial Colors */
-  --rise: #00ff88;
-  --fall: #ff4d4d;
+  /* Financial Colors (Asian Style: Red=Up, Green=Down) */
+  --rise: #ff4d4d;
+  --fall: #00ff88;
   --gold: #ffd700;
 
   /* Glass Variables */

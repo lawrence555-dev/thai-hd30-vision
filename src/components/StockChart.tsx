@@ -11,6 +11,7 @@ interface ChartPoint {
 
 interface StockChartProps {
     data: ChartPoint[];
+    markers?: any[]; // SeriesMarker<Time>[]
     color?: string;
     height?: number;
     enableGrid?: boolean;
@@ -21,7 +22,8 @@ interface StockChartProps {
 
 export const StockChart: React.FC<StockChartProps> = ({
     data,
-    color = '#22c55e',
+    markers,
+    color = '#ff4d4d',
     height = 300,
     enableGrid = false,
     enableCrosshair = false,
@@ -56,6 +58,17 @@ export const StockChart: React.FC<StockChartProps> = ({
                         bottom: 0.1,
                     },
                 },
+                localization: {
+                    timeFormatter: (time: number) => {
+                        const date = new Date(time * 1000);
+                        return date.toLocaleTimeString('en-GB', {
+                            timeZone: 'Asia/Bangkok',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                    },
+                },
                 timeScale: {
                     borderVisible: false,
                     timeVisible: true,
@@ -75,7 +88,7 @@ export const StockChart: React.FC<StockChartProps> = ({
             });
 
             // Determine line color based on trend (First vs Last VALID price)
-            let lineColor = '#22c55e'; // Default green
+            let lineColor = '#ff4d4d'; // Default Red (Up)
 
             // Find first valid price
             const firstPoint = data.find(p => p.price !== null && p.price !== undefined && !isNaN(p.price));
@@ -83,7 +96,8 @@ export const StockChart: React.FC<StockChartProps> = ({
             const lastPoint = [...data].reverse().find(p => p.price !== null && p.price !== undefined && !isNaN(p.price));
 
             if (firstPoint && lastPoint && firstPoint.price != null && lastPoint.price != null) {
-                lineColor = lastPoint.price >= firstPoint.price ? '#22c55e' : '#ef4444';
+                // Asian Style: Up is Red (#ff4d4d), Down is Green (#22c55e)
+                lineColor = lastPoint.price >= firstPoint.price ? '#ff4d4d' : '#22c55e';
             }
 
             const newSeries = chart.addSeries(AreaSeries, {
@@ -95,26 +109,36 @@ export const StockChart: React.FC<StockChartProps> = ({
                 crosshairMarkerVisible: false,
             });
 
+            if (markers && markers.length > 0) {
+                if (typeof newSeries.setMarkers === 'function') {
+                    newSeries.setMarkers(markers);
+                } else {
+                    console.warn("setMarkers is not a function on newSeries", newSeries);
+                }
+            }
+
             if (data.length > 0) {
                 // Sort data by time safely (data is already unix timestamp numbers)
                 const sortedData = [...data].sort((a, b) => a.time - b.time);
 
-                // Ensure unique times
                 const uniqueData = [];
                 const seenTimes = new Set();
                 for (const item of sortedData) {
-                    // Validate price is a finite number
-                    if (
-                        !seenTimes.has(item.time) &&
-                        item.price !== null &&
-                        item.price !== undefined &&
-                        !isNaN(item.price) &&
-                        isFinite(item.price)
-                    ) {
-                        seenTimes.add(item.time);
+                    // Prevent duplicate times
+                    if (seenTimes.has(item.time)) continue;
+                    seenTimes.add(item.time);
+
+                    // Check for valid price
+                    if (item.price !== null && item.price !== undefined && !isNaN(item.price) && isFinite(item.price)) {
                         uniqueData.push({
                             time: item.time as any,
                             value: item.price
+                        });
+                    } else {
+                        // Handle Whitespace (Gap) - Push object with ONLY time
+                        uniqueData.push({
+                            time: item.time as any
+                            // No value property creates a whitespace/gap
                         });
                     }
                 }
@@ -136,7 +160,7 @@ export const StockChart: React.FC<StockChartProps> = ({
                 chartRef.current = null;
             }
         };
-    }, [data, color, height]); // Re-create if data changes, but handle resize internally, enableGrid, enableCrosshair]);
+    }, [data, markers, color, height]); // Re-create if data checks/markers change
 
     return <div ref={chartContainerRef} className="w-full relative uppercase" style={{ height }} />;
 }

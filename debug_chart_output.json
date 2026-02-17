@@ -1,0 +1,413 @@
+{
+  "symbol": "KBANK.BK",
+  "data": [
+    {
+      "time": 1770951600,
+      "price": 198.5
+    },
+    {
+      "time": 1770951900,
+      "price": 198.5
+    },
+    {
+      "time": 1770952200,
+      "price": 199
+    },
+    {
+      "time": 1770952500,
+      "price": 198
+    },
+    {
+      "time": 1770952800,
+      "price": 197.5
+    },
+    {
+      "time": 1770953100,
+      "price": 197
+    },
+    {
+      "time": 1770953400,
+      "price": 197.5
+    },
+    {
+      "time": 1770953700,
+      "price": 198
+    },
+    {
+      "time": 1770954000,
+      "price": 197.5
+    },
+    {
+      "time": 1770954300,
+      "price": 197
+    },
+    {
+      "time": 1770954600,
+      "price": 196.5
+    },
+    {
+      "time": 1770954900,
+      "price": 196.5
+    },
+    {
+      "time": 1770955200,
+      "price": 197
+    },
+    {
+      "time": 1770955500,
+      "price": 197
+    },
+    {
+      "time": 1770955800,
+      "price": 197
+    },
+    {
+      "time": 1770956100,
+      "price": 197
+    },
+    {
+      "time": 1770956400,
+      "price": 197
+    },
+    {
+      "time": 1770956700,
+      "price": 196.5
+    },
+    {
+      "time": 1770957000,
+      "price": 196.5
+    },
+    {
+      "time": 1770957300,
+      "price": 196.5
+    },
+    {
+      "time": 1770957600,
+      "price": 197
+    },
+    {
+      "time": 1770957900,
+      "price": 197
+    },
+    {
+      "time": 1770958200,
+      "price": 197
+    },
+    {
+      "time": 1770958500,
+      "price": 196.5
+    },
+    {
+      "time": 1770958800,
+      "price": 196.5
+    },
+    {
+      "time": 1770959100,
+      "price": 196.5
+    },
+    {
+      "time": 1770959400,
+      "price": 196.5
+    },
+    {
+      "time": 1770959700,
+      "price": 196.5
+    },
+    {
+      "time": 1770960000,
+      "price": 197
+    },
+    {
+      "time": 1770960300,
+      "price": 196.5
+    },
+    {
+      "time": 1770967500,
+      "price": 196.5
+    },
+    {
+      "time": 1770967800,
+      "price": 196.5
+    },
+    {
+      "time": 1770968100,
+      "price": 196.5
+    },
+    {
+      "time": 1770968400,
+      "price": 196.5
+    },
+    {
+      "time": 1770968700,
+      "price": 196.5
+    },
+    {
+      "time": 1770969000,
+      "price": 196.5
+    },
+    {
+      "time": 1770969300,
+      "price": 196.5
+    },
+    {
+      "time": 1770969600,
+      "price": 196.5
+    },
+    {
+      "time": 1770969900,
+      "price": 196.5
+    },
+    {
+      "time": 1770970200,
+      "price": 196.5
+    },
+    {
+      "time": 1770970500,
+      "price": 196.5
+    },
+    {
+      "time": 1770970800,
+      "price": 196.5
+    },
+    {
+      "time": 1770971100,
+      "price": 196.5
+    },
+    {
+      "time": 1770971400,
+      "price": 196.5
+    },
+    {
+      "time": 1770971700,
+      "price": 196.5
+    },
+    {
+      "time": 1770972000,
+      "price": 196.5
+    },
+    {
+      "time": 1770972300,
+      "price": 196.5
+    },
+    {
+      "time": 1770972600,
+      "price": 196.5
+    },
+    {
+      "time": 1770972900,
+      "price": 196.5
+    },
+    {
+      "time": 1770973200,
+      "price": 196.5
+    },
+    {
+      "time": 1770973500,
+      "price": 196.5
+    },
+    {
+      "time": 1770973800,
+      "price": 196
+    },
+    {
+      "time": 1770974100,
+      "price": 196
+    },
+    {
+      "time": 1770974400,
+      "price": 196
+    },
+    {
+      "time": 1770974700,
+      "price": 196
+    }
+  ],
+  "meta": {
+    "currency": "THB",
+    "symbol": "KBANK.BK",
+    "exchangeName": "SET",
+    "fullExchangeName": "Thailand",
+    "instrumentType": "EQUITY",
+    "firstTradeDate": "2000-01-04T03:00:00.000Z",
+    "regularMarketTime": "2026-02-13T09:35:24.000Z",
+    "hasPrePostMarketData": false,
+    "gmtoffset": 25200,
+    "timezone": "ICT",
+    "exchangeTimezoneName": "Asia/Bangkok",
+    "regularMarketPrice": 195.5,
+    "fiftyTwoWeekHigh": 199,
+    "fiftyTwoWeekLow": 145,
+    "regularMarketDayHigh": 199,
+    "regularMarketDayLow": 195.5,
+    "regularMarketVolume": 22220447,
+    "longName": "Kasikornbank Public Company Limited",
+    "shortName": "KBANK_KASIKORNBANK",
+    "chartPreviousClose": 188.5,
+    "previousClose": 198.5,
+    "scale": 3,
+    "priceHint": 2,
+    "currentTradingPeriod": {
+      "pre": {
+        "timezone": "ICT",
+        "start": "2026-02-13T03:00:00.000Z",
+        "end": "2026-02-13T03:00:00.000Z",
+        "gmtoffset": 25200
+      },
+      "regular": {
+        "timezone": "ICT",
+        "start": "2026-02-13T03:00:00.000Z",
+        "end": "2026-02-13T09:30:00.000Z",
+        "gmtoffset": 25200
+      },
+      "post": {
+        "timezone": "ICT",
+        "start": "2026-02-13T09:30:00.000Z",
+        "end": "2026-02-13T09:30:00.000Z",
+        "gmtoffset": 25200
+      }
+    },
+    "tradingPeriods": {
+      "pre": [
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-09T03:00:00.000Z",
+            "end": "2026-02-09T03:00:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-10T03:00:00.000Z",
+            "end": "2026-02-10T03:00:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-11T03:00:00.000Z",
+            "end": "2026-02-11T03:00:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-12T03:00:00.000Z",
+            "end": "2026-02-12T03:00:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-13T03:00:00.000Z",
+            "end": "2026-02-13T03:00:00.000Z",
+            "gmtoffset": 25200
+          }
+        ]
+      ],
+      "post": [
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-09T09:30:00.000Z",
+            "end": "2026-02-09T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-10T09:30:00.000Z",
+            "end": "2026-02-10T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-11T09:30:00.000Z",
+            "end": "2026-02-11T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-12T09:30:00.000Z",
+            "end": "2026-02-12T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-13T09:30:00.000Z",
+            "end": "2026-02-13T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ]
+      ],
+      "regular": [
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-09T03:00:00.000Z",
+            "end": "2026-02-09T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-10T03:00:00.000Z",
+            "end": "2026-02-10T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-11T03:00:00.000Z",
+            "end": "2026-02-11T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-12T03:00:00.000Z",
+            "end": "2026-02-12T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ],
+        [
+          {
+            "timezone": "ICT",
+            "start": "2026-02-13T03:00:00.000Z",
+            "end": "2026-02-13T09:30:00.000Z",
+            "gmtoffset": 25200
+          }
+        ]
+      ]
+    },
+    "dataGranularity": "5m",
+    "range": "",
+    "validRanges": [
+      "1d",
+      "5d",
+      "1mo",
+      "3mo",
+      "6mo",
+      "1y",
+      "2y",
+      "5y",
+      "10y",
+      "ytd",
+      "max"
+    ]
+  }
+}
