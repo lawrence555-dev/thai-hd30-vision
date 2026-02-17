@@ -1,0 +1,19 @@
+name: Update Stock Prices
+
+on:
+  schedule:
+    # 每 15 分鐘執行一次 (GitHub Actions 免費)
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Call Update Prices API
+        run: |
+          curl -X POST https://thai-hd30-vision.vercel.app/api/cron/update-prices
+          
+      - name: Log completion
+        run: echo "Price update completed at $(date)"
